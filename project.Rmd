@@ -104,6 +104,10 @@ res_over_men <- 0
 # The allowable values for the Rank column of the data frame
 allowables <- c(c(1:127), 'DNF', 'DNS', 'DSQ', 'LAP')
 
+# Initializing the list connecting each race to the race_id
+list_id_men <- list()
+
+
 for (i in seq_along(years)){
   for(j in seq_along(locations[[years[i]]])){
     files <- list.files(locations_path_men[[years[i]]],
@@ -111,8 +115,10 @@ for (i in seq_along(years)){
     # Importing the data frame
     for (file in files){
       
-      # Updating the race_id that will act as our primary key of the data set
+     
       race_id <- race_id + 1
+      
+      
       df_res <- read.csv(file = file, sep = '\t')
       
       # Raising a flag if the Rank column has not allowable columns
@@ -170,12 +176,25 @@ for (i in seq_along(years)){
                   'no race type specified'))
       }
       
+      # Filling the list connecting the id to the race, the unique identifier for a race has
+      # been chosen as a touple, we need also the name of the runner-up because Samuelsson won back
+      # to back spring in Oestersund in 2021... Sebastian, I know you are training with Luki right now 
+      #but you also # could have avoided being so awesome
+      list_id_men[[paste(df_res$race_type[1], years[i], locations[[years[i]]][j], 
+                         df_res$Given.Name[1], df_res$Given.Name[2])]] <- race_id
+      
       # Updating the final data frame
       df_results_men <- rbind(df_results_men, df_res)
     }
   }
 }
 ```
+
+
+
+
+
+
 
 
 ```{r}
@@ -204,6 +223,9 @@ res_over_women <- 0
 # The allowable values for the Rank column of the data frame
 allowables <- c(c(1:127), 'DNF', 'DNS', 'DSQ', 'LAP')
 
+# Defining the list connectiong races to their id
+list_id_women <- list()
+
 for (i in seq_along(years)){
   for(j in seq_along(locations[[years[i]]])){
     files <- list.files(locations_path_women[[years[i]]],
@@ -213,6 +235,9 @@ for (i in seq_along(years)){
       
       # Updating the race_id that will act as our primary key of the data set
       race_id <- race_id + 1
+      
+      list_id_women[[file]] <- race_id
+      
       df_res <- read.csv(file = file, sep = '\t')
       
       # Raising a flag if the Rank column has not allowable columns
@@ -270,12 +295,19 @@ for (i in seq_along(years)){
                   'no race type specified'))
       }
       
+      # Filling the list as we did for the men, popping out the disqualified is due to the 
+      # Glaryzina affair
+      list_id_women[[paste(df_res$race_type[1], years[i], locations[[years[i]]][j], 
+                         df_res$Given.Name[df_res$Rank %!in% c('DSQ')][1], 
+                         df_res$Given.Name[df_res$Rank %!in% c('DSQ')][2])]] <- race_id
+      
       # Updating the final data frame
       df_results_women <- rbind(df_results_women, df_res)
     }
   }
 }
 ```
+
 
 
 ```{r}
@@ -306,7 +338,7 @@ allowables <- c(1:127)
 # Initializing the final loop data frame
 df_final_loop_men <- data.frame()
 
-# Brginning the cycle that loops over every year and every venue
+# Beginning the cycle that loops over every year and every venue
 for (i in seq_along(years)){
   
   for(j in seq_along(locations[[years[i]]])){
@@ -339,7 +371,7 @@ for (i in seq_along(years)){
             
             ){
             # Updating the race id
-            race_id <- race_id + 1
+            
             
             # Reading the file into a data frame
             df_loop <- read.csv2(file = file, sep = '\t')
@@ -382,8 +414,7 @@ for (i in seq_along(years)){
             # Adding the column specifying the venue of the race
             df_loop$location <- rep(locations[[years[i]]][j], nrow(df_loop))
             
-            # Adding the column with the id of the race
-            df_loop$ID <- rep(race_id, nrow(df_loop))
+           
             
             # Adding the column specifying the type of the race
             if (grepl(pattern = 'pursuit', x =file, fixed=TRUE)){
@@ -402,6 +433,10 @@ for (i in seq_along(years)){
               cat(paste('There is a mistake in',file,
                         'no race type specified'))
             }
+            
+            # Assigning to the race the same id that it has on the results data frame
+            df_loop$ID <-rep( list_id_men[[paste(df_loop$race_type[1], years[i], locations[[years[i]]][j], 
+                         df_loop$Given.Name[1],  df_loop$Given.Name[2])]], nrow(df_loop))
             
             # Initializing the list of the reference times among all the columns, we have in fact that 
             # time columns are note stored as absolute times: we have a reference time and then the other records
@@ -535,6 +570,11 @@ for (i in seq_along(years)){
 ```
 
 
+```{r}
+df_final_loop_men
+```
+
+
 
 ```{r}
 # Initializing the race_id for the second to last loop data frame
@@ -620,8 +660,7 @@ for (i in seq_along(years)){
             # Adding the column specifying the venue of the race
             df_loop$location <- rep(locations[[years[i]]][j], nrow(df_loop))
             
-            # Adding the column with the id of the race
-            df_loop$ID <- rep(race_id, nrow(df_loop))
+           
             
             # Adding the column specifying the type of the race
             if (grepl(pattern = 'pursuit', x =file, fixed=TRUE)){
@@ -640,6 +679,13 @@ for (i in seq_along(years)){
               cat(paste('There is a mistake in',file,
                         'no race type specified'))
             }
+            
+             # Adding the column with the id of the race
+            
+            # Assigning to the race the same id that it has on the results data frame
+            df_loop$ID <-rep( list_id_women[[paste(df_loop$race_type[1], years[i], locations[[years[i]]][j], 
+                         df_loop$Given.Name[df_res$Rank %!in% c('DSQ')][1],  
+                         df_loop$Given.Name[df_res$Rank %!in% c('DSQ')][2])]], nrow(df_loop))
             
             # Initializing the list of the reference times among all the columns, we have in fact that 
             # time columns are note stored as absolute times: we have a reference time and then the other records
@@ -804,20 +850,41 @@ if(res_dnf_women + res_dns_women + res_dsq_women + res_lap_women + res_over_wome
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## Finding the clutchest biathletes in the word cup
 
+```{r}
+df_results_men
+```
 
+
+
+
+```{r}
+df_final_loop_men
+```
+
+```{r}
+df_clutch_men <- merge(x=df_results_men,y=df_final_loop_men, by=c('ID', 
+                                                                  'location', 'Nation', 'Rank', 'Bib',
+                                                                  'Family.Name', 'Given.Name',
+                                                                  'year', 'race_type'), all.x=FALSE,
+                                                                  all.y=TRUE, sort=FALSE)
+```
+
+```{r}
+head(df_clutch_men)
+```
+```{r}
+df_clutch_women <- merge(x=df_results_women,y=df_final_loop_women, by=c('ID', 
+                                                                  'location', 'Nation', 'Rank', 'Bib',
+                                                                  'Family.Name', 'Given.Name',
+                                                                  'year', 'race_type'), all.x=FALSE,
+                                                                  all.y=TRUE, sort=FALSE)
+```
+
+
+
+```{r}
+head(df_clutch_women)
+```
 
