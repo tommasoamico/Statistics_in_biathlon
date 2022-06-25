@@ -2,7 +2,7 @@
 ```{r}
 library(lubridate)
 library(taRifx)
-
+library(ggplot2)
 ```
 
 
@@ -852,18 +852,11 @@ if(res_dnf_women + res_dns_women + res_dsq_women + res_lap_women + res_over_wome
 
 ## Finding the clutchest biathletes in the word cup
 
-```{r}
-df_results_men
-```
-
 
 
 
 ```{r}
-df_final_loop_men
-```
-
-```{r}
+# Performing the left join between thw 2 men data frames
 df_clutch_men <- merge(x=df_results_men,y=df_final_loop_men, by=c('ID', 
                                                                   'location', 'Nation', 'Rank', 'Bib',
                                                                   'Family.Name', 'Given.Name',
@@ -875,6 +868,7 @@ df_clutch_men <- merge(x=df_results_men,y=df_final_loop_men, by=c('ID',
 head(df_clutch_men)
 ```
 ```{r}
+# Performing the two left join for the 2 women data frames
 df_clutch_women <- merge(x=df_results_women,y=df_final_loop_women, by=c('ID', 
                                                                   'location', 'Nation', 'Rank', 'Bib',
                                                                   'Family.Name', 'Given.Name',
@@ -887,4 +881,137 @@ df_clutch_women <- merge(x=df_results_women,y=df_final_loop_women, by=c('ID',
 ```{r}
 head(df_clutch_women)
 ```
+
+```{r}
+# Defining the function to create a column with the number of mistakes in the final range
+final_range <- function(x){
+  iterable <- unlist(strsplit((x),""))
+  return(iterable[length(iterable)])
+}
+
+# Creating the 2 columns
+df_clutch_men$final_range <- as.numeric(sapply(df_clutch_men$Shootings, final_range))
+df_clutch_women$final_range <- as.numeric(sapply(df_clutch_women$Shootings, final_range))
+```
+
+
+For this part of the analysis we consider only head-to-head races, that is, pursuits and mass starts
+
+
+```{r}
+#Defining the data frame with only pursuits and mass starts
+df_no_chrono_men <- df_clutch_men[df_clutch_men$race_type %!in% c('Sprint', 'Individual'),]
+
+# The unique ids of the races
+unique_ids <- unique(df_no_chrono_men$ID)
+
+# Initializing the data frame with athletes entering the last shooting range in the top ten
+df_top10_men <- data.frame()
+
+# Initializing the data frame with athletes entering the last shooting range outside the top ten
+df_bottom <- data.frame()
+
+#Looping over the ids
+for (id in unique_ids){
+  # Identifying the race with each id
+  race <- df_no_chrono_men[df_no_chrono_men$ID == id,]
+  # Computing the time entering the shooting range
+  race$entry_time <- race$Cumulative.Time - race$Range.Time - 
+                    race$Penalty.Time
+  # We order the race following the entry time record
+  race_ord <- race[order(race$entry_time),]
+  # Taking only the top 10 rows
+  race_add <- race_ord[c(1:10), ]
+  # Taking all the records but thew top 10
+  race_add_last <- race_ord[c(11:nrow(race_ord)), ]
+  # Updating the df_bottom data frame
+  df_bottom <- rbind(df_bottom, race_add_last)
+  # Updating the f_top10 data frame
+  df_top10_men <- rbind(df_top10_men, race_add)
+}
+```
+
+
+
+```{r}
+head(df_top10_men)
+```
+
+```{r}
+head(df_bottom)
+```
+
+
+```{r}
+# Creating the column with the full name of the record
+df_bottom$full_name <- paste(df_bottom$Family.Name, df_bottom$Given.Name, '')
+# Creating the column with the full name of the record
+df_top10_men$full_name <- paste(df_top10_men$Family.Name, df_top10_men$Given.Name, '')
+# Defining the vector of biathletes that have more than 5 top ten appearences
+top_names <- names(table(df_top10_men$full_name)[unname(table(df_top10_men$full_name))>=5])
+# Selecting only the top names
+top_names_top_10 <- df_top10_men[df_top10_men$full_name %in% top_names,]
+head(top_names_top_10)
+```
+
+
+```{r}
+# Selecting only the athletes in top_names
+top_names_bottom <- df_bottom[df_bottom$full_name %in% top_names,]
+head(top_names_bottom)
+```
+
+Now we want to visualize the most consistent athletes, we plot the percentage of times the top biathletes entered the final shooting range in a top ten position.
+
+```{r}
+named_percentages <- table(top_names_top_10$full_name)/(table(top_names_top_10$full_name) 
+                                   + table(top_names_bottom$full_name))*100
+
+percentages <- unname(named_percentages)
+order_perc <- order(percentages)
+```
+
+
+
+
+
+
+```{r}
+named_percentages
+```
+
+
+```{r}
+real_percentages <- list()
+for (i in c(c(1:34, c(36:length(named_percentages))))){
+  real_percentages[[names(named_percentages)[i]]] <- unname(named_percentages)[i]
+}
+  
+real_percentages[['Loginov Alexander ']] <- 0.5*(unname(named_percentages)[35] + unname(named_percentages)[36]) 
+```
+
+```{r}
+real_percentages
+```
+
+
+```{r}
+plot <- ggplot() +
+        geom_col(aes(x=names(named_percentages) , y=sort(unname(percentages)))) +
+        
+        scale_x_discrete(labels = names(named_percentages)[order_perc]) +
+        
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 90)) +
+        geom_col(aes(x=32 , y=unname(named_percentages[names(named_percentages)=='Hofer Lukas ']))
+                 , fill='blue') +
+        geom_col(aes(x=5 , y=unname(named_percentages[names(named_percentages)=='Windisch Dominik ']))
+                 , fill='blue') +
+        geom_col(aes(x=51 , y=unname(named_percentages[names(named_percentages)=='Fourcade Martin ']))
+                 , fill='firebrick') +
+        labs(x = '', y = '% of times entering in the top 10', title = 'Concistency of the top biathletes')
+plot
+
+```
+We see with no surprise how The most consistent biathlete 
 
