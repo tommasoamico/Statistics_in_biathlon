@@ -14,7 +14,7 @@ years_men_path <- list.dirs(path = '../biathlon_analysis/biathlon_data/men',
                             recursive=FALSE,full.names=TRUE)
 
 # Path of the directory for each year for women
-years_women_path <- list.dirs(path='../biathlon_analysis/biathlon_data/men',
+years_women_path <- list.dirs(path='../biathlon_analysis/biathlon_data/women',
                               recursive=FALSE,full.names=TRUE)
 
 # List of years directory names for men
@@ -22,7 +22,7 @@ years_men <- list.dirs(path = '../biathlon_analysis/biathlon_data/men',
                        recursive = FALSE, full.names=FALSE)
 
 # List of years directory names for women
-years_women <- list.dirs(path = '../biathlon_analysis/biathlon_data/men', 
+years_women <- list.dirs(path = '../biathlon_analysis/biathlon_data/women', 
                          recursive =FALSE,full.names=FALSE)
 
 # Initializing the list of years present in the data set
@@ -50,12 +50,21 @@ for (i in seq_along(years)){
 locations[[years[i]]] <- (list.dirs(path = years_men_path[i], recursive = FALSE, full.names = FALSE))
 }
 # Initializing a list that has to be similar to the previous one but with the full path as values
-locations_path <- list()
+locations_path_men <- list()
+
+# Same thing for women
+locations_path_women <- list()
 
 # Filling the list
 for (i in seq_along(years)){
 
-locations_path[[years[i]]] <- (list.dirs(path = years_men_path[i], recursive = FALSE, full.names = TRUE))
+  locations_path_men[[years[i]]] <- (list.dirs(path = years_men_path[i], recursive = FALSE, full.names = TRUE))
+}
+
+
+for (i in seq_along(years)){
+
+  locations_path_women[[years[i]]] <- (list.dirs(path = years_women_path[i], recursive = FALSE, full.names = TRUE))
 }
 ```
 
@@ -71,33 +80,33 @@ locations_path[[years[i]]] <- (list.dirs(path = years_men_path[i], recursive = F
 
 ```{r}
 # Initializing the final data frame of the result of each race
-df_results <- data.frame()
+df_results_men <- data.frame()
 
 # Initializing the id of the race
 race_id <- 0
 
 # Initializing the count of all the DNS
-res_dns <- 0
+res_dns_men <- 0
 
 # Initializing the count of all the DSQ
-res_dsq <- 0
+res_dsq_men <- 0
 
 # Initializing the count of all the DNF
-res_dnf <- 0
+res_dnf_men <- 0
 
 # Initializing the count of all the lapped athletes
-res_lap <- 0
+res_lap_men <- 0
 
 # Initializing the count of all the bibs > 120 because they won't appear in loops, 
 # this happens only in Kontiolahti 2014, these damned Finnish...
-res_over <- 0
+res_over_men <- 0
 
 # The allowable values for the Rank column of the data frame
 allowables <- c(c(1:127), 'DNF', 'DNS', 'DSQ', 'LAP')
 
 for (i in seq_along(years)){
   for(j in seq_along(locations[[years[i]]])){
-    files <- list.files(locations_path[[years[i]]],
+    files <- list.files(locations_path_men[[years[i]]],
                   pattern=sprintf('results.%s',locations[[years[i]]][j]),full.names = TRUE )
     # Importing the data frame
     for (file in files){
@@ -110,22 +119,22 @@ for (i in seq_along(years)){
       if(length(df_res$Rank[df_res$Rank %!in% allowables]) !=0){cat('wooow problem, in', file)}
       
       # Updating the count of bibs > 120
-      res_over <- res_over + length(df_res$Rank[destring(df_res$Rank) > 120]
+      res_over_men <- res_over_men + length(df_res$Rank[destring(df_res$Rank) > 120]
              [! is.na(df_res$Rank[destring(df_res$Rank) > 120])])
       
       # Updating the DNS count
-      res_dns <- res_dns + length(df_res$Rank[df_res$Rank=='DNS'])
+      res_dns_men <- res_dns_men + length(df_res$Rank[df_res$Rank=='DNS'])
       
       # Updating the DNF count
-      res_dnf <- res_dnf + length(df_res$Rank[df_res$Rank=='DNF'])
+      res_dnf_men <- res_dnf_men + length(df_res$Rank[df_res$Rank=='DNF'])
       
       # Updating the DSQ count
-      res_dsq <- res_dsq + length(df_res$Rank[df_res$Rank=='DSQ'])
+      res_dsq_men <- res_dsq_men + length(df_res$Rank[df_res$Rank=='DSQ'])
       
       # Updating the lapped athletes' count
-      res_lap <- res_lap + length(df_res$Rank[df_res$Rank=='LAP'])
+      res_lap_men <- res_lap_men + length(df_res$Rank[df_res$Rank=='LAP'])
      
-      res_str <- res_str + length(df_res$Rank[(is.na(destring(df_res$Rank)))])
+      
       # Checking for possible inconsistencies in the data set
       if('Rank' %!in% colnames(df_res)){
         cat(paste('There is a mistake in', file))
@@ -162,16 +171,127 @@ for (i in seq_along(years)){
       }
       
       # Updating the final data frame
-      df_results <- rbind(df_results, df_res)
+      df_results_men <- rbind(df_results_men, df_res)
     }
   }
 }
 ```
 
 
+```{r}
+# Initializing the final data frame of the result of each race
+df_results_women <- data.frame()
+
+# Initializing the id of the race
+race_id <- 0
+
+# Initializing the count of all the DNS
+res_dns_women <- 0
+
+# Initializing the count of all the DSQ
+res_dsq_women <- 0
+
+# Initializing the count of all the DNF
+res_dnf_women <- 0
+
+# Initializing the count of all the lapped athletes
+res_lap_women <- 0
+
+# Initializing the count of all the bibs > 120 because they won't appear in loops, 
+# this happens only in Kontiolahti 2014, these damned Finnish...
+res_over_women <- 0
+
+# The allowable values for the Rank column of the data frame
+allowables <- c(c(1:127), 'DNF', 'DNS', 'DSQ', 'LAP')
+
+for (i in seq_along(years)){
+  for(j in seq_along(locations[[years[i]]])){
+    files <- list.files(locations_path_women[[years[i]]],
+                  pattern=sprintf('results.%s',locations[[years[i]]][j]),full.names = TRUE )
+    # Importing the data frame
+    for (file in files){
+      
+      # Updating the race_id that will act as our primary key of the data set
+      race_id <- race_id + 1
+      df_res <- read.csv(file = file, sep = '\t')
+      
+      # Raising a flag if the Rank column has not allowable columns
+      if(length(df_res$Rank[df_res$Rank %!in% allowables]) !=0){cat('wooow problem, in', file)}
+      
+      # Updating the count of bibs > 120
+      res_over_women <- res_over_women + length(df_res$Rank[destring(df_res$Rank) > 120]
+             [! is.na(df_res$Rank[destring(df_res$Rank) > 120])])
+      
+      # Updating the DNS count
+      res_dns_women <- res_dns_women + length(df_res$Rank[df_res$Rank=='DNS'])
+      
+      # Updating the DNF count
+      res_dnf_women <- res_dnf_women + length(df_res$Rank[df_res$Rank=='DNF'])
+      
+      # Updating the DSQ count
+      res_dsq_women <- res_dsq_women + length(df_res$Rank[df_res$Rank=='DSQ'])
+      
+      # Updating the lapped athletes' count
+      res_lap_women <- res_lap_women + length(df_res$Rank[df_res$Rank=='LAP'])
+     
+      
+      # Checking for possible inconsistencies in the data set
+      if('Rank' %!in% colnames(df_res)){
+        cat(paste('There is a mistake in', file))
+      }
+      # Adding the isolated.pursuit column to the non-pursuit races in order to have the same
+      # columns to perform the rbind operation
+      else if('Isolated.Pursuit' %!in% colnames(df_res)){
+        df_res$Isolated.Pursuit <- rep(NA, nrow(df_res))
+      }
+
+      # Adding the column specifying the year of the race
+      df_res$year <- rep(years[i], nrow(df_res))
+      # Adding the column specifying the venue of the race
+      df_res$location <- rep(locations[[years[i]]][j], nrow(df_res))
+      # Adding the column with the id of the race
+      df_res$ID <- rep(race_id, nrow(df_res))
+      
+      # Adding the column specifying the type of the race
+      if (grepl(pattern = 'pursuit', x =file, fixed=TRUE)){
+        df_res$race_type <- rep('Pursuit', nrow(df_res))
+      }
+      else if (grepl(pattern = 'individual', x =file, fixed=TRUE)){
+        df_res$race_type <- rep('Individual', nrow(df_res))
+      }
+      else if (grepl(pattern = 'mass_start', x =file, fixed=TRUE)){
+        df_res$race_type <- rep('Mass start', nrow(df_res))
+      }
+      else if (grepl(pattern = 'sprint', x =file, fixed=TRUE)){
+        df_res$race_type <- rep('Sprint', nrow(df_res))
+      }
+      else{
+        cat(paste('There is a mistake in',file,
+                  'no race type specified'))
+      }
+      
+      # Updating the final data frame
+      df_results_women <- rbind(df_results_women, df_res)
+    }
+  }
+}
+```
+
 
 ```{r}
-df_results
+head(df_results_women)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+head(df_results_men)
 ```
 
 
@@ -184,7 +304,7 @@ race_id <- 0
 # The set of allowable values for the Rank column of the loop data frame
 allowables <- c(1:127)
 # Initializing the final loop data frame
-df_final_loop <- data.frame()
+df_final_loop_men <- data.frame()
 
 # Brginning the cycle that loops over every year and every venue
 for (i in seq_along(years)){
@@ -193,7 +313,7 @@ for (i in seq_along(years)){
     
     
     # All the files that represent a loop in our directory
-    files <- list.files(locations_path[[years[i]]],
+    files <- list.files(locations_path_men[[years[i]]],
                   pattern=sprintf('loop...%s',locations[[years[i]]][j]),full.names = TRUE )
     
       # Looping over all the files
@@ -267,16 +387,16 @@ for (i in seq_along(years)){
             
             # Adding the column specifying the type of the race
             if (grepl(pattern = 'pursuit', x =file, fixed=TRUE)){
-              df_res$race_type <- rep('Pursuit', nrow(df_res))
+              df_loop$race_type <- rep('Pursuit', nrow(df_loop))
             }
             else if (grepl(pattern = 'individual', x =file, fixed=TRUE)){
-              df_res$race_type <- rep('Individual', nrow(df_res))
+              df_loop$race_type <- rep('Individual', nrow(df_loop))
             }
             else if (grepl(pattern = 'mass_start', x =file, fixed=TRUE)){
-              df_res$race_type <- rep('Mass start', nrow(df_res))
+              df_loop$race_type <- rep('Mass start', nrow(df_loop))
             }
             else if (grepl(pattern = 'sprint', x =file, fixed=TRUE)){
-              df_res$race_type <- rep('Sprint', nrow(df_res))
+              df_loop$race_type <- rep('Sprint', nrow(df_loop))
             }
             else{
               cat(paste('There is a mistake in',file,
@@ -404,7 +524,7 @@ for (i in seq_along(years)){
             }
             
           # Binding together the data frames  
-          df_final_loop <- rbind(df_final_loop, df_loop)
+          df_final_loop_men <- rbind(df_final_loop_men, df_loop)
         
       }
     }
@@ -417,19 +537,281 @@ for (i in seq_along(years)){
 
 
 ```{r}
-df_final_loop
+# Initializing the race_id for the second to last loop data frame
+race_id <- 0
+# The set of allowable values for the Rank column of the loop data frame
+allowables <- c(1:127)
+# Initializing the final loop data frame
+df_final_loop_women <- data.frame()
+
+# Beginning the cycle that loops over every year and every venue
+for (i in seq_along(years)){
+  
+  for(j in seq_along(locations[[years[i]]])){
+    
+    
+    # All the files that represent a loop in our directory
+    files <- list.files(locations_path_women[[years[i]]],
+                  pattern=sprintf('loop...%s',locations[[years[i]]][j]),full.names = TRUE )
+    
+      # Looping over all the files
+      for (file in files){
+        # Here we select, between all loop files the ones that represent the second to last loop,
+        # that is, the loop in which the biathlete arrive at the last shooting range
+        if (
+            (grepl(pattern = 'pursuit', x =file, fixed=TRUE)  
+            &&  
+            grepl(pattern = 'loop_4', x =file, fixed=TRUE))
+            || 
+            (grepl(pattern = 'sprint', x =file, fixed=TRUE)  
+             &&  
+            grepl(pattern = 'loop_2', x =file, fixed=TRUE))
+            || 
+            (grepl(pattern = 'individual', x =file, fixed=TRUE)  
+             &&  
+            grepl(pattern = 'loop_4', x =file, fixed=TRUE))
+            || 
+            (grepl(pattern = 'mass_start', x =file, fixed=TRUE)  
+             &&  
+            grepl(pattern = 'loop_4', x =file, fixed=TRUE))
+            
+            ){
+            # Updating the race id
+            race_id <- race_id + 1
+            
+            # Reading the file into a data frame
+            df_loop <- read.csv2(file = file, sep = '\t')
+            
+            # Here we raise a flag if we don't have the Rank colun in the created data frame
+            if('Rank' %!in% colnames(df_loop)){
+                cat(paste('There is a mistake in', file, '\n'))
+            
+            # Here we raise a flag and print the relative fail if we have a Rank value that is not allowed
+            if(length(df_loop$Rank[df_loop$Rank %!in% allowables]) !=0){cat('wooow problem, in', file)}
+            
+            
+            } 
+            
+            # The column Ski.Time is present only on individual races, for tha others we fill it with 0
+            # in order to make the rbind possible
+            if ('Ski.Time'%!in% colnames(df_loop)){
+              df_loop[['Ski.Time']] <- rep(0, nrow(df_loop))
+            }
+            
+            # The Canmore's short individual did not have the Range.Time column, so we create it for the 
+            # rbind... but who cares about short individuals anyway!!!
+            if ('Range.Time'%!in% colnames(df_loop)){
+              df_loop[['Range.Time']] <- rep(0, nrow(df_loop))
+            }
+            
+            # The columns of the data frame
+            columns_df <- colnames(df_loop)
+            
+            # The index from which column regarding times start
+            idx_time_columns <- which(columns_df=='Nation')
+            
+            # The 'time' columns of the table, the -1 at the end is to delete 'Nation'
+            # that is not between them
+            time_columns <- columns_df[idx_time_columns:length(columns_df)][-1]
+            
+            # Adding the column specifying the year of the race
+            df_loop$year <- rep(years[i], nrow(df_loop))
+            
+            # Adding the column specifying the venue of the race
+            df_loop$location <- rep(locations[[years[i]]][j], nrow(df_loop))
+            
+            # Adding the column with the id of the race
+            df_loop$ID <- rep(race_id, nrow(df_loop))
+            
+            # Adding the column specifying the type of the race
+            if (grepl(pattern = 'pursuit', x =file, fixed=TRUE)){
+              df_loop$race_type <- rep('Pursuit', nrow(df_loop))
+            }
+            else if (grepl(pattern = 'individual', x =file, fixed=TRUE)){
+              df_loop$race_type <- rep('Individual', nrow(df_loop))
+            }
+            else if (grepl(pattern = 'mass_start', x =file, fixed=TRUE)){
+              df_loop$race_type <- rep('Mass start', nrow(df_loop))
+            }
+            else if (grepl(pattern = 'sprint', x =file, fixed=TRUE)){
+              df_loop$race_type <- rep('Sprint', nrow(df_loop))
+            }
+            else{
+              cat(paste('There is a mistake in',file,
+                        'no race type specified'))
+            }
+            
+            # Initializing the list of the reference times among all the columns, we have in fact that 
+            # time columns are note stored as absolute times: we have a reference time and then the other records
+            # reference to it as +'time_interval'
+            reference_times <- list()
+            
+            # Looping over all the time columns
+            for(column in time_columns){
+              
+              # In individual races penalty times, as we know, are a thing of their own and the data set
+              # itself seem to have noticed! It does not have in fact a value for biathletes that found the
+              # 0 in a certain shooting range. We deal with it by giving by default the value 0.
+              # We know what you are thinking: What if every one missed at least once?
+              # Come on have a little trust in your sport heroes! as soon as Sturla Holm Lægreid will be around
+              # we are more them safe!
+              if (column == 'Penalty.Time'
+                  &&
+                  grepl(pattern = 'individual', x = file, fixed=TRUE)
+                  )
+              {reference_time <- duration(second = 0)}
+              
+              # In the else statement instead we select as the reference time the record with no '+' in 
+              # its body, the [1] is there to arbitrary break the ties between equally good reference times
+              else{
+                reference_time <- df_loop[[column]][!grepl(pattern = '+', x =df_loop[[column]],
+                            fixed=TRUE)]
+                }
+              reference_time <- reference_time[1]
+              
+              # In this if cycle we convert the reference time from a string to a time duration
+              # thanks to the lubridate package and its duration function
+              
+              # The first case is for whe we have minutes and not only second where we have a column 
+              # as a separator
+              if (grepl(pattern = ':', x  = reference_time,
+                            fixed=TRUE)){
+                
+                # Changing the reference time into an iterable
+                string_sep <- unlist(strsplit((reference_time),""))
+                
+                # Getting the index of the column
+                idx_sep <- unlist(gregexpr(':', reference_time, fixed = TRUE))
+                
+                # This step raises a flag if having a double colon signaling hours, 
+                # comes out: biathletes are no snails!
+                if (length(idx_sep) > 1){cat(paste('Do we have hours now?? in', file  ))}
+                
+                # The minute part of the reference time
+                min <- as.numeric(paste(string_sep[1:idx_sep-1], collapse=""))
+                
+                # The second part of the reference time
+                sec <- as.numeric(paste(string_sep[-c(1:idx_sep)], collapse=""))
+                reference_time_ <- duration(minute= min, second=sec)
+                
+              }
+              # This second case is for reference times that don't reach a minute
+              else{
+                sec <- as.numeric(reference_time)
+                reference_time_ <- duration(second=sec)
+              }
+              
+              # Updating the list
+              reference_times[[column]] <- reference_time_
+              
+              # Index of the reference times
+              reference_time_idx <- which(!grepl(pattern = '+', x =df_loop[[column]],
+                            fixed=TRUE))
+              
+              # Renaming the times of the current columns
+              times_to_add <- df_loop[[column]]
+              
+              # Initializing the column of the absolute times
+              final_adding <- c()
+              
+              # Filling the final_adding vector
+              for (k in seq_along(times_to_add)){
+                
+                # Putting in the reference times
+                if (k %in% reference_time_idx){
+                  final_adding[k] <- reference_times[[column]]
+                }
+                
+                # Putting in the 'minutes' recorda
+                else if (grepl(pattern = ':', x =times_to_add[k], fixed=TRUE)){
+                  string_add <- unlist(strsplit((times_to_add[k]),""))
+                  idx_add <- unlist(gregexpr(':', times_to_add[k]))
+                  
+                  # Flag raise for 'hour' times
+                  if (length(idx_add) > 1){print('Do we have hours now?? in', file)} 
+                  
+                  min_add <- as.numeric(paste(string_add[1:idx_add-1], collapse=""))
+                  sec_add <- as.numeric(paste(string_add[-c(1:idx_add)], collapse=""))
+                  
+                  adding_time <- duration(minute= min_add, second=sec_add)
+                  
+                  # Here the [1] is present for arbitrarily breaking ties for equally good
+                  # reference times
+                  final_adding[k] <- adding_time + reference_times[[column]][1]
+                }
+                else{
+                  
+                  # The original data frame contained a couple of 'broken' records, being only
+                  # the string '+', we changed the values to a known fixed outlier ('+1000') and here
+                  # we transform it into NA
+                  if (times_to_add[k]=='+1000') {final_adding[k] <- NA}
+                  
+                  # Non pathological case were we have a 'seconds' time
+                  else{
+                    final_adding[k] <- duration(second = as.numeric(times_to_add[k])) + 
+                      reference_times[[column]]
+                  }
+                }
+                 
+              }
+              
+              # Updating the column of the data frame
+              df_loop[[column]] <- final_adding
+             
+              
+            }
+            
+          # Binding together the data frames  
+          df_final_loop_women <- rbind(df_final_loop_women, df_loop)
+        
+      }
+    }
+  }
+}
+
+```
+
+
+
+```{r}
+head(df_final_loop_women)
+```
+
+
+
+
+
+
+
+```{r}
+head(df_final_loop_men)
 ```
 
 
 ```{r}
 
-if(res_dnf + res_dns + res_dsq + res_lap + res_over + nrow(df_final_loop) == nrow(df_results)){
+if(res_dnf_men + res_dns_men + res_dsq_men + res_lap_men + res_over_men + nrow(df_final_loop_men) == nrow(df_results_men)){
   cat('Thank god we no one got lost')
   }else{'Who is missing?!'}
-
-
-
 ```
+
+```{r}
+
+if(res_dnf_women + res_dns_women + res_dsq_women + res_lap_women + res_over_women + nrow(df_final_loop_women) == nrow(df_results_women)){
+  cat('Thank god we no one got lost')
+  }else{'Who is missing?!'}
+```
+
+
+
+
+
+
+
+
+
+
+
 
 
 
