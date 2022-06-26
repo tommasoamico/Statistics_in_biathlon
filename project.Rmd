@@ -945,8 +945,12 @@ head(df_bottom)
 ```{r}
 # Creating the column with the full name of the record
 df_bottom$full_name <- paste(df_bottom$Family.Name, df_bottom$Given.Name, '')
+# Solving the Alexander Loginov problem
+df_bottom$full_name[df_bottom$full_name == 'Loginov Alexandr '] <- 'Loginov Alexander '
 # Creating the column with the full name of the record
 df_top10_men$full_name <- paste(df_top10_men$Family.Name, df_top10_men$Given.Name, '')
+# Solving the Alexander Loginov problem
+df_top10_men$full_name[df_top10_men$full_name == 'Loginov Alexandr '] <- 'Loginov Alexander '
 # Defining the vector of biathletes that have more than 5 top ten appearences
 top_names <- names(table(df_top10_men$full_name)[unname(table(df_top10_men$full_name))>=5])
 # Selecting only the top names
@@ -976,23 +980,7 @@ order_perc <- order(percentages)
 
 
 
-```{r}
-named_percentages
-```
 
-
-```{r}
-real_percentages <- list()
-for (i in c(c(1:34, c(36:length(named_percentages))))){
-  real_percentages[[names(named_percentages)[i]]] <- unname(named_percentages)[i]
-}
-  
-real_percentages[['Loginov Alexander ']] <- 0.5*(unname(named_percentages)[35] + unname(named_percentages)[36]) 
-```
-
-```{r}
-real_percentages
-```
 
 
 ```{r}
@@ -1003,15 +991,53 @@ plot <- ggplot() +
         
         theme_bw() +
         theme(axis.text.x = element_text(angle = 90)) +
-        geom_col(aes(x=32 , y=unname(named_percentages[names(named_percentages)=='Hofer Lukas ']))
-                 , fill='blue') +
+        geom_col(aes(x=31 , y=unname(named_percentages[names(named_percentages)=='Hofer Lukas ']))
+                 , fill='blue', color='black') +
         geom_col(aes(x=5 , y=unname(named_percentages[names(named_percentages)=='Windisch Dominik ']))
-                 , fill='blue') +
-        geom_col(aes(x=51 , y=unname(named_percentages[names(named_percentages)=='Fourcade Martin ']))
-                 , fill='firebrick') +
+                 , fill='blue', color='black') +
+        geom_col(aes(x=50 , y=unname(named_percentages[names(named_percentages)=='Fourcade Martin ']))
+                 , fill='firebrick', color='black') +
         labs(x = '', y = '% of times entering in the top 10', title = 'Concistency of the top biathletes')
 plot
 
 ```
-We see with no surprise how The most consistent biathlete 
+We see with no surprise how the most consistent biathlete is Martin Fourcade (highlighted in red), not anyone gets the name Monsieur Le Biathlon after all. It comes with quite the surprise though the massive advantage he has with respect to another great as Johannes Thingnes Bø, a whopping 88.7% against 75%. We have to consider though that our data starts from the 2014/2015 season so when Fourcade was already in its prime while Johannes was moving his big but first steps in the word cup. 
+In blue we can see the two Italians represented, as we know Luki is by far the most consistent but the infamous echoes of a certain word championship still rings in our ears... CINQUE!
+
+p.s. that Oestersund mass start isn't represented in this part of the analysis as Dominik entered the last shooting range outside the top 10... we all know the ending though.
+
+```{r}
+efficiency_list <- list()
+```
+
+```{r}
+efficiency_df <- data.frame(table(top_names_bottom$full_name), table(top_names_top_10$full_name))
+efficiency_df$Var1.1 <- NULL
+colnames(efficiency_df) <- c('Full Names', '# Out top 10', '# In top 10')
+head(efficiency_df)
+```
+
+```{r}
+miss_top_10 <- aggregate(x = top_names_top_10$final_range, by=list(Names = top_names_top_10$full_name), 
+                         FUN = sum)
+head(miss_top_10)
+```
+
+
+```{r}
+cbind(efficiency_df, 'Misses top 10' = miss_top_10$x, 'Attempt top 10' = efficiency_df$`# In top 10`*5)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
