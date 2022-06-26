@@ -835,7 +835,6 @@ head(df_final_loop_men)
 
 
 ```{r}
-
 if(res_dnf_men + res_dns_men + res_dsq_men + res_lap_men + res_over_men + nrow(df_final_loop_men) == nrow(df_results_men)){
   cat('Thank god we no one got lost')
   }else{'Who is missing?!'}
@@ -856,7 +855,7 @@ if(res_dnf_women + res_dns_women + res_dsq_women + res_lap_women + res_over_wome
 
 
 ```{r}
-# Performing the left join between thw 2 men data frames
+# Performing the left join between the 2 men data frames
 df_clutch_men <- merge(x=df_results_men,y=df_final_loop_men, by=c('ID', 
                                                                   'location', 'Nation', 'Rank', 'Bib',
                                                                   'Family.Name', 'Given.Name',
@@ -968,10 +967,14 @@ head(top_names_bottom)
 Now we want to visualize the most consistent athletes, we plot the percentage of times the top biathletes entered the final shooting range in a top ten position.
 
 ```{r}
+# The percentage of times each athlete entered the last shooting range in the top 10
+# per each athlete
 named_percentages <- table(top_names_top_10$full_name)/(table(top_names_top_10$full_name) 
                                    + table(top_names_bottom$full_name))*100
 
+# The actual percentages
 percentages <- unname(named_percentages)
+# The vector to order the percentages
 order_perc <- order(percentages)
 ```
 
@@ -1006,18 +1009,20 @@ In blue we can see the two Italians represented, as we know Luki is by far the m
 
 p.s. that Oestersund mass start isn't represented in this part of the analysis as Dominik entered the last shooting range outside the top 10... we all know the ending though.
 
-```{r}
-efficiency_list <- list()
-```
+
 
 ```{r}
+# The data frame that will contain data representing the efficiency
 efficiency_df <- data.frame(table(top_names_bottom$full_name), table(top_names_top_10$full_name))
+# Eliminating the duplicate of the names
 efficiency_df$Var1.1 <- NULL
+# Re-defining the column names
 colnames(efficiency_df) <- c('Full Names', '# Out top 10', '# In top 10')
 head(efficiency_df)
 ```
 
 ```{r}
+# Getting the misses in the top 10
 miss_top_10 <- aggregate(x = top_names_top_10$final_range, by=list(Names = top_names_top_10$full_name), 
                          FUN = sum)
 head(miss_top_10)
@@ -1025,15 +1030,161 @@ head(miss_top_10)
 
 
 ```{r}
-cbind(efficiency_df, 'Misses top 10' = miss_top_10$x, 'Attempt top 10' = efficiency_df$`# In top 10`*5)
+# Misses when approaching not in the top ten
+miss_no_top_10 <- aggregate(x = top_names_bottom$final_range, by=list(Names = top_names_bottom$full_name), 
+                         FUN = sum)
+head(miss_no_top_10)
+```
+
+
+
+
+```{r}
+# Updating the efficiency df with Misses and attempts
+efficiency_df <- cbind(efficiency_df, 'Misses top 10' = miss_top_10$x, 
+      'Attempts top 10' = efficiency_df$`# In top 10`*5,
+      'Misses not top 10' = miss_no_top_10$x,
+      'Attempts no top 10' = efficiency_df$`# Out top 10`*5)
+```
+
+
+
+```{r}
+head(efficiency_df)
+```
+
+Now we wanna determine a proper prior, due to its conjugate properties we choose a beta prior. We use a beta having as mean the mean, for each biathlete, of the probability of hitting a shot.
+We should be careful though, the last shooting range is always a standing shooting range, so we take the hits and misses only for the last two shots.
+
+
+
+
+```{r}
+# Adding the full name to the no_chrono data frame
+df_no_chrono_men$full_name <- paste(df_no_chrono_men$Family.Name, df_no_chrono_men$Given.Name, '')
+
+# Function to compute the mistakes in the standing shootings
+last_shots <- function(x){
+  #Making our string an iterable
+  iterable <- unlist(strsplit((x),""))
+  #Taking the shots of interest
+  string_shots <- iterable[c(5, 7)]
+  #Converting the first shot
+  first_shot <- as.numeric(string_shots[1])
+  # Converting the second shot
+  second_shot <- as.numeric(string_shots[2])
+  # Returning the total mistakes
+  return(first_shot + second_shot)
+}
+
+# Making the column with the total misses 
+df_no_chrono_men$miss_last_2 <- sapply(X = df_no_chrono_men$Shootings, FUN = last_shots)
+
+# Making the column with the standing precision
+df_no_chrono_men$standing_prob <- (10-df_no_chrono_men$miss_last_2)/10
+```
+
+
+
+```{r}
+head(df_no_chrono_men)
 ```
 
 
 
 
 
+```{r}
+# Total misses for each biathlete over the full data frame
+misses <- aggregate(x = df_no_chrono_men$miss_last_2, by = list(Names = df_no_chrono_men$full_name),
+                    FUN = sum)$x
+
+# Data frame with the number of occurrences
+occ <- as.data.frame(table(df_no_chrono_men$full_name))
+
+# Creating the joint data frame
+hit_miss <- cbind(occ, misses)
+
+# Each occurences corresponds to 10 shots
+hit_miss$Freq <- hit_miss$Freq*10
+
+# Renaming the shots
+colnames(hit_miss) <- c('Names', 'Tot_Attempts', 'Misses')
+
+# Inserting the total attempts
+hit_miss$Hits <- hit_miss$Tot_Attempts - hit_miss$Misses
+
+# Inserting the mean probability for each biathlete
+hit_miss$Probabilities <- hit_miss$Hits/hit_miss$Tot_Attempts
+
+# Restricting to the atlethes inside the top_names vector
+top_names_hit_miss <- hit_miss[hit_miss$Names %in% top_names,]
+
+head(top_names_hit_miss)
+```
 
 
+```{r}
+# Computing the standard deviation of the probabilities
+std <- aggregate(x = df_no_chrono_men$standing_prob, 
+          by = list(Category = df_no_chrono_men$full_name), FUN = sd)
+
+# Restricting to top_names
+top_names_std <- std[std$Category %in% top_names,]
+
+# Updating the top_names_hit_miss data frame
+top_names_hit_miss$std <- top_names_std$x
+
+head(top_names_hit_miss)
+```
+
+
+```{r}
+# The function to compute the alpha of the beta given mean and variance
+alpha <- function(mean, sigma){
+  return(mean^2*( (1-mean)/(sigma^2) - 1/mean ))
+}
+
+# The function to compute the beta of the beta given mean and alpha
+beta <- function(alpha, mean){
+  return(alpha*((1/mean) - 1))
+}
+```
+
+
+```{r}
+top_names_hit_miss$alpha <- alpha(mean = top_names_hit_miss$Probabilities, 
+                                  sigma = top_names_hit_miss$std)
+
+top_names_hit_miss$beta <- beta(alpha = top_names_hit_miss$alpha, 
+                                  mean = top_names_hit_miss$Probabilities)
+```
+
+
+```{r}
+head(top_names_hit_miss)
+```
+
+```{r}
+x_axis <- seq(0, 1, 0.001)
+min_idx <- which.min(top_names_hit_miss$Probabilities)
+min_prob <- top_names_hit_miss[min_idx,]
+
+max_idx <- 2#which.max(top_names_hit_miss$Probabilities)
+max_prob <- top_names_hit_miss[max_idx,]
+
+plot <- ggplot() +
+        geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = min_prob$alpha, shape2 = min_prob$beta),
+                                        color = min_prob$Names)) +
+        geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = max_prob$alpha, shape2 = max_prob$beta),
+                                        color = max_prob$Names)) +
+        theme_bw()
+plot
+```
+
+```{r}
+max_prob
+```
 
 
 
