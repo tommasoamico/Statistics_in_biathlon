@@ -3,6 +3,7 @@
 library(lubridate)
 library(taRifx)
 library(ggplot2)
+library(purrr)
 ```
 
 
@@ -901,14 +902,21 @@ For this part of the analysis we consider only head-to-head races, that is, purs
 #Defining the data frame with only pursuits and mass starts
 df_no_chrono_men <- df_clutch_men[df_clutch_men$race_type %!in% c('Sprint', 'Individual'),]
 
+df_no_chrono_women <- df_clutch_women[df_clutch_women$race_type %!in% c('Sprint', 'Individual'),]
+
 # The unique ids of the races
 unique_ids <- unique(df_no_chrono_men$ID)
+
+unique_ids_w <- unique(df_no_chrono_women$ID)
 
 # Initializing the data frame with athletes entering the last shooting range in the top ten
 df_top10_men <- data.frame()
 
+df_top10_women <- data.frame()
+
 # Initializing the data frame with athletes entering the last shooting range outside the top ten
 df_bottom <- data.frame()
+df_bottom_w <- data.frame()
 
 #Looping over the ids
 for (id in unique_ids){
@@ -928,6 +936,26 @@ for (id in unique_ids){
   # Updating the f_top10 data frame
   df_top10_men <- rbind(df_top10_men, race_add)
 }
+
+
+#Looping over the ids
+for (id in unique_ids_w){
+  # Identifying the race with each id
+  race_w <- df_no_chrono_women[df_no_chrono_women$ID == id,]
+  # Computing the time entering the shooting range
+  race_w$entry_time <- race_w$Cumulative.Time - race_w$Range.Time - 
+                    race_w$Penalty.Time
+  # We order the race following the entry time record
+  race_ord_w <- race_w[order(race_w$entry_time),]
+  # Taking only the top 10 rows
+  race_add_w <- race_ord_w[c(1:10), ]
+  # Taking all the records but thew top 10
+  race_add_last_w <- race_ord_w[c(11:nrow(race_ord_w)), ]
+  # Updating the df_bottom data frame
+  df_bottom_w <- rbind(df_bottom_w, race_add_last_w)
+  # Updating the f_top10 data frame
+  df_top10_women <- rbind(df_top10_women, race_add_w)
+}
 ```
 
 
@@ -935,33 +963,55 @@ for (id in unique_ids){
 ```{r}
 head(df_top10_men)
 ```
+```{r}
+head(df_top10_women)
+```
 
 ```{r}
 head(df_bottom)
 ```
 
 
+
+```{r}
+head(df_bottom_w)
+```
+
+
+
+
 ```{r}
 # Creating the column with the full name of the record
 df_bottom$full_name <- paste(df_bottom$Family.Name, df_bottom$Given.Name, '')
+df_bottom_w$full_name <- paste(df_bottom_w$Family.Name, df_bottom_w$Given.Name, '')
+
 # Solving the Alexander Loginov problem
 df_bottom$full_name[df_bottom$full_name == 'Loginov Alexandr '] <- 'Loginov Alexander '
 # Creating the column with the full name of the record
 df_top10_men$full_name <- paste(df_top10_men$Family.Name, df_top10_men$Given.Name, '')
+df_top10_women$full_name <- paste(df_top10_women$Family.Name, df_top10_women$Given.Name, '')
 # Solving the Alexander Loginov problem
 df_top10_men$full_name[df_top10_men$full_name == 'Loginov Alexandr '] <- 'Loginov Alexander '
-# Defining the vector of biathletes that have more than 5 top ten appearences
+
+# Defining the vector of biathletes that have more than 5 top ten appearances
 top_names <- names(table(df_top10_men$full_name)[unname(table(df_top10_men$full_name))>=5])
+top_names_w <- names(table(df_top10_women$full_name)[unname(table(df_top10_women$full_name))>=5])
 # Selecting only the top names
+top_names_top_10_w <- df_top10_women[df_top10_women$full_name %in% top_names_w,]
 top_names_top_10 <- df_top10_men[df_top10_men$full_name %in% top_names,]
 head(top_names_top_10)
+head(top_names_top_10_w)
 ```
+
+
 
 
 ```{r}
 # Selecting only the athletes in top_names
 top_names_bottom <- df_bottom[df_bottom$full_name %in% top_names,]
+top_names_bottom_w <- df_bottom_w[df_bottom_w$full_name %in% top_names_w,]
 head(top_names_bottom)
+head(top_names_bottom_w)
 ```
 
 Now we want to visualize the most consistent athletes, we plot the percentage of times the top biathletes entered the final shooting range in a top ten position.
@@ -972,9 +1022,14 @@ Now we want to visualize the most consistent athletes, we plot the percentage of
 named_percentages <- table(top_names_top_10$full_name)/(table(top_names_top_10$full_name) 
                                    + table(top_names_bottom$full_name))*100
 
+named_percentages_w <- table(top_names_top_10_w$full_name)/(table(top_names_top_10_w$full_name) 
+                                   + table(top_names_bottom_w$full_name))*100
+
 # The actual percentages
 percentages <- unname(named_percentages)
+percentages_w <- unname(named_percentages_w)
 # The vector to order the percentages
+order_perc_w <- order(percentages_w)
 order_perc <- order(percentages)
 ```
 
@@ -993,7 +1048,7 @@ plot <- ggplot() +
         scale_x_discrete(labels = names(named_percentages)[order_perc]) +
         
         theme_bw() +
-        theme(axis.text.x = element_text(angle = 90)) +
+        theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5)) +
         geom_col(aes(x=31 , y=unname(named_percentages[names(named_percentages)=='Hofer Lukas ']))
                  , fill='blue', color='black') +
         geom_col(aes(x=5 , y=unname(named_percentages[names(named_percentages)=='Windisch Dominik ']))
@@ -1010,22 +1065,54 @@ In blue we can see the two Italians represented, as we know Luki is by far the m
 p.s. that Oestersund mass start isn't represented in this part of the analysis as Dominik entered the last shooting range outside the top 10... we all know the ending though.
 
 
+```{r}
+plot <- ggplot() +
+        geom_col(aes(x=names(named_percentages_w) , y=sort(unname(percentages_w)))) +
+        
+        scale_x_discrete(labels = names(named_percentages_w)[order_perc_w]) +
+        
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 90, hjust=+1, vjust = 0.5)) +
+        geom_col(aes(x=46 , y=unname(named_percentages_w[names(named_percentages_w)=='Wierer Dorothea ']))
+                 , fill='blue', color='black') +
+        geom_col(aes(x=17 , y=unname(named_percentages_w[names(named_percentages_w)=='Vittozzi Lisa ']))
+                 , fill='blue', color='black') +
+        geom_col(aes(x=49 , y=unname(named_percentages_w[names(named_percentages_w)=='Domracheva Darya ']))
+                 , fill='firebrick', color='black') +
+        labs(x = '', y = '% of times entering in the top 10', title = 'Concistency of the top biathletes')
+plot
+
+```
+In the women's case Domracheva, Dahlmeier and Koukalova are in a class of their own, we can notice how there isn't a big drop in the percentage of times entering the last range in the top 10 from Domracheva to Dahlmeier contrary to what happened in the men's case.
+Speaking of our heroines, Dorothea is top notch while Lisa struggle a little bit more, we have to consider though that the Sappada native was moving her first steps in the word cup at the beginning of the data acquisition.
+
+
+
+
 
 ```{r}
 # The data frame that will contain data representing the efficiency
 efficiency_df <- data.frame(table(top_names_bottom$full_name), table(top_names_top_10$full_name))
+efficiency_df_w <- data.frame(table(top_names_bottom_w$full_name), table(top_names_top_10_w$full_name))
 # Eliminating the duplicate of the names
 efficiency_df$Var1.1 <- NULL
+efficiency_df_w$Var1.1 <- NULL
 # Re-defining the column names
 colnames(efficiency_df) <- c('Full Names', '# Out top 10', '# In top 10')
+colnames(efficiency_df_w) <- c('Full Names', '# Out top 10', '# In top 10')
 head(efficiency_df)
+head(efficiency_df_w)
 ```
 
 ```{r}
 # Getting the misses in the top 10
 miss_top_10 <- aggregate(x = top_names_top_10$final_range, by=list(Names = top_names_top_10$full_name), 
                          FUN = sum)
+
+miss_top_10_w <- aggregate(x = top_names_top_10_w$final_range, by=list(Names = top_names_top_10_w$full_name), 
+                         FUN = sum)
 head(miss_top_10)
+head(miss_top_10_w)
 ```
 
 
@@ -1034,6 +1121,10 @@ head(miss_top_10)
 miss_no_top_10 <- aggregate(x = top_names_bottom$final_range, by=list(Names = top_names_bottom$full_name), 
                          FUN = sum)
 head(miss_no_top_10)
+
+miss_no_top_10_w<- aggregate(x = top_names_bottom_w$final_range, by=list(Names = top_names_bottom_w$full_name), 
+                         FUN = sum)
+head(miss_no_top_10_w)
 ```
 
 
@@ -1045,12 +1136,18 @@ efficiency_df <- cbind(efficiency_df, 'Misses top 10' = miss_top_10$x,
       'Attempts top 10' = efficiency_df$`# In top 10`*5,
       'Misses not top 10' = miss_no_top_10$x,
       'Attempts no top 10' = efficiency_df$`# Out top 10`*5)
+
+efficiency_df_w <- cbind(efficiency_df_w, 'Misses top 10' = miss_top_10_w$x, 
+      'Attempts top 10' = efficiency_df_w$`# In top 10`*5,
+      'Misses not top 10' = miss_no_top_10_w$x,
+      'Attempts no top 10' = efficiency_df_w$`# Out top 10`*5)
 ```
 
 
 
 ```{r}
 head(efficiency_df)
+head(efficiency_df_w)
 ```
 
 Now we wanna determine a proper prior, due to its conjugate properties we choose a beta prior. We use a beta having as mean the mean, for each biathlete, of the probability of hitting a shot.
@@ -1062,6 +1159,8 @@ We should be careful though, the last shooting range is always a standing shooti
 ```{r}
 # Adding the full name to the no_chrono data frame
 df_no_chrono_men$full_name <- paste(df_no_chrono_men$Family.Name, df_no_chrono_men$Given.Name, '')
+
+df_no_chrono_women$full_name <- paste(df_no_chrono_women$Family.Name, df_no_chrono_women$Given.Name, '')
 
 # Function to compute the mistakes in the standing shootings
 last_shots <- function(x){
@@ -1079,15 +1178,18 @@ last_shots <- function(x){
 
 # Making the column with the total misses 
 df_no_chrono_men$miss_last_2 <- sapply(X = df_no_chrono_men$Shootings, FUN = last_shots)
+df_no_chrono_women$miss_last_2 <- sapply(X = df_no_chrono_women$Shootings, FUN = last_shots)
 
 # Making the column with the standing precision
 df_no_chrono_men$standing_prob <- (10-df_no_chrono_men$miss_last_2)/10
+df_no_chrono_women$standing_prob <- (10-df_no_chrono_women$miss_last_2)/10
 ```
 
 
 
 ```{r}
 head(df_no_chrono_men)
+head(df_no_chrono_women)
 ```
 
 
@@ -1121,6 +1223,33 @@ hit_miss$Probabilities <- hit_miss$Hits/hit_miss$Tot_Attempts
 top_names_hit_miss <- hit_miss[hit_miss$Names %in% top_names,]
 
 head(top_names_hit_miss)
+
+# Total misses for each biathlete over the full data frame
+misses_w <- aggregate(x = df_no_chrono_women$miss_last_2, by = list(Names = df_no_chrono_women$full_name),
+                    FUN = sum)$x
+
+# Data frame with the number of occurrences
+occ_w <- as.data.frame(table(df_no_chrono_women$full_name))
+
+# Creating the joint data frame
+hit_miss_w <- cbind(occ_w, misses_w)
+
+# Each occurences corresponds to 10 shots
+hit_miss_w$Freq <- hit_miss_w$Freq*10
+
+# Renaming the shots
+colnames(hit_miss_w) <- c('Names', 'Tot_Attempts', 'Misses')
+
+# Inserting the total attempts
+hit_miss_w$Hits <- hit_miss_w$Tot_Attempts - hit_miss_w$Misses
+
+# Inserting the mean probability for each biathlete
+hit_miss_w$Probabilities <- hit_miss_w$Hits/hit_miss_w$Tot_Attempts
+
+# Restricting to the atlethes inside the top_names vector
+top_names_hit_miss_w <- hit_miss_w[hit_miss_w$Names %in% top_names_w,]
+
+head(top_names_hit_miss_w)
 ```
 
 
@@ -1136,58 +1265,428 @@ top_names_std <- std[std$Category %in% top_names,]
 top_names_hit_miss$std <- top_names_std$x
 
 head(top_names_hit_miss)
+
+
+# Computing the standard deviation of the probabilities
+std_w <- aggregate(x = df_no_chrono_women$standing_prob, 
+          by = list(Category = df_no_chrono_women$full_name), FUN = sd)
+
+# Restricting to top_names
+top_names_std_w <- std_w[std_w$Category %in% top_names_w,]
+
+# Updating the top_names_hit_miss data frame
+top_names_hit_miss_w$std <- top_names_std_w$x
+
+head(top_names_hit_miss_w)
 ```
 
 
 ```{r}
 # The function to compute the alpha of the beta given mean and variance
-alpha <- function(mean, sigma){
+alpha <- function(mode, sigma){
   return(mean^2*( (1-mean)/(sigma^2) - 1/mean ))
 }
 
 # The function to compute the beta of the beta given mean and alpha
-beta <- function(alpha, mean){
-  return(alpha*((1/mean) - 1))
+beta <- function(alpha, mode){
+  return(
+    ((alpha - 1) - (alpha - 2)*mode)/mode
+  )
+}
+
+root_func <- function(m, v){
+  uni_func <- function(x){
+    return(v*x^3 + x^2*(m^3-m^2 + 7*m*v - 3*v) + x*(-2*m^3 + 16*(m^2)*v + m^2 -
+                                             14*m*v + 3*v) + (12*(m^3)*v -16*(m^2)*v +
+                                                                7*m*v - v))
+  }
+  return(uniroot(uni_func, lower=1, upper=50)$root)
+    
 }
 ```
 
 
+
+
+
+
 ```{r}
-top_names_hit_miss$alpha <- alpha(mean = top_names_hit_miss$Probabilities, 
-                                  sigma = top_names_hit_miss$std)
+top_names_hit_miss$alpha <- unlist(map2(.x= top_names_hit_miss$Probabilities, 
+                                        .y=top_names_hit_miss$std^2, .f=root_func))
 
 top_names_hit_miss$beta <- beta(alpha = top_names_hit_miss$alpha, 
-                                  mean = top_names_hit_miss$Probabilities)
+                                  mode = top_names_hit_miss$Probabilities)
+
+
+top_names_hit_miss_w$alpha <- unlist(map2(.x= top_names_hit_miss_w$Probabilities, 
+                                        .y=top_names_hit_miss_w$std^2, .f=root_func))
+
+top_names_hit_miss_w$beta <- beta(alpha = top_names_hit_miss_w$alpha, 
+                                  mode = top_names_hit_miss_w$Probabilities)
 ```
 
 
 ```{r}
 head(top_names_hit_miss)
+head(top_names_hit_miss_w)
 ```
+
+
+
+
 
 ```{r}
 x_axis <- seq(0, 1, 0.001)
 min_idx <- which.min(top_names_hit_miss$Probabilities)
 min_prob <- top_names_hit_miss[min_idx,]
 
-max_idx <- 2#which.max(top_names_hit_miss$Probabilities)
+max_idx <- which.max(top_names_hit_miss$Probabilities)
 max_prob <- top_names_hit_miss[max_idx,]
 
 plot <- ggplot() +
         geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = min_prob$alpha, shape2 = min_prob$beta),
-                                        color = min_prob$Names)) +
+                                        color = as.character(min_prob$Names))) +
         geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = max_prob$alpha, shape2 = max_prob$beta),
-                                        color = max_prob$Names)) +
+                                        color = as.character(max_prob$Names))) +
+        labs(color = 'Legend', x='Probability P', y='Prior PDF', title=
+               'Prior of the best and worst standing shooters') +
+        scale_color_manual(values= c("Kuehn Johannes " = 'firebrick', "Birnbacher Andreas " = 'navy')) +
+        theme_bw()
+plot
+```
+
+We see how the prior probability of a sharp-shoother like Birnbacher is peaked far to the right with respect to a very good skier but someone who's standing shooting is a liability like Johannes Kuehn.
+
+
+
+
+```{r}
+x_axis <- seq(0, 1, 0.001)
+min_idx_w <- which.min(top_names_hit_miss_w$Probabilities)
+min_prob_w <- top_names_hit_miss_w[min_idx_w,]
+
+max_idx_w <- which.max(top_names_hit_miss_w$Probabilities)
+max_prob_w <- top_names_hit_miss_w[max_idx_w,]
+
+plot <- ggplot() +
+        geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = min_prob_w$alpha, shape2 = min_prob_w$beta),
+                                        color = as.character(min_prob_w$Names))) +
+        geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = max_prob_w$alpha, shape2 = max_prob_w$beta),
+                                        color = as.character(max_prob_w$Names))) +
+        labs(color = 'Legend', x='Probability P', y='Prior PDF', title=
+               'Prior of the best and worst standing shooters') +
+        scale_color_manual(values= c("Sola Hanna " = 'firebrick', "Skardino Nadezhda " = 'navy')) +
+        theme_bw()
+plot
+```
+Also here we notice how the a strong skier but inconsistent shooter like Hanna Sola has the prior peaked at the worst percentage while in this battle within the Belarus' borders Skardino performs much better.
+
+
+
+```{r}
+plot <- ggplot() +
+        geom_point(aes(x=rep(x_axis, nrow(top_names_hit_miss)),
+                       y=dbeta(x=rep(x_axis, nrow(top_names_hit_miss)), 
+                        shape1 = top_names_hit_miss$alpha, shape2 = top_names_hit_miss$beta 
+                        ),color=rep(x_axis, nrow(top_names_hit_miss))), size=0.8) +
+        
+        labs(color = 'Probability \nColor map', x='P', y='Prior PDF', title=
+               'Priors computed') +
+        
         theme_bw()
 plot
 ```
 
 ```{r}
-max_prob
+plot <- ggplot() +
+        geom_point(aes(x=rep(x_axis, nrow(top_names_hit_miss_w)),
+                       y=dbeta(x=rep(x_axis, nrow(top_names_hit_miss_w)), 
+                        shape1 = top_names_hit_miss_w$alpha, shape2 = top_names_hit_miss_w$beta 
+                        ),color=rep(x_axis, nrow(top_names_hit_miss_w))), size=0.8) +
+        
+        labs(color = 'Probability \nColor map', x='P', y='Prior PDF', title=
+               'Priors computed') +
+        
+        theme_bw()
+plot
+```
+We see how here the transition from low percentages to high ones is much smoother than in the men case
+
+
+
+The next step is to insert the paramters of our priors into the efficiency_df
+
+
+```{r}
+# Hits top 10
+efficiency_df$Hits_top_ten <- efficiency_df$`Attempts top 10` - efficiency_df$`Misses top 10`
+# Hits when not in the top 10
+efficiency_df$Hits_no_top_ten <- efficiency_df$`Attempts no top 10` - efficiency_df$`Misses not top 10`
+# Values of the alpha parameter of the beta
+efficiency_df$alpha_prior <- top_names_hit_miss$alpha
+# Values of the beta parameter of the beta
+efficiency_df$beta_prior <- top_names_hit_miss$beta
+# alpha of the posterior when in the top 10
+efficiency_df$alpha_post_10 <- efficiency_df$alpha_prior + efficiency_df$Hits_top_ten
+# beta of the posterior when in the top 10
+efficiency_df$beta_post_10 <- efficiency_df$beta_prior + 
+  efficiency_df$`Attempts top 10` - efficiency_df$Hits_top_ten
+# alpha of the posterior when not in the top 10
+efficiency_df$alpha_post_no10 <- efficiency_df$alpha_prior + efficiency_df$Hits_no_top_ten
+# beta of the posterior when not in the top 10
+efficiency_df$beta_post_no10 <- efficiency_df$beta_prior + 
+  efficiency_df$`Attempts no top 10` - efficiency_df$Hits_no_top_ten
+
+# Hits top 10
+efficiency_df_w$Hits_top_ten <- efficiency_df_w$`Attempts top 10` - efficiency_df_w$`Misses top 10`
+# Hits when not in the top 10
+efficiency_df_w$Hits_no_top_ten <- efficiency_df_w$`Attempts no top 10` - efficiency_df_w$`Misses not top 10`
+# Values of the alpha parameter of the beta
+efficiency_df_w$alpha_prior <- top_names_hit_miss_w$alpha
+# Values of the beta parameter of the beta
+efficiency_df_w$beta_prior <- top_names_hit_miss_w$beta
+# alpha of the posterior when in the top 10
+efficiency_df_w$alpha_post_10 <- efficiency_df_w$alpha_prior + efficiency_df_w$Hits_top_ten
+# beta of the posterior when in the top 10
+efficiency_df_w$beta_post_10 <- efficiency_df_w$beta_prior + 
+  efficiency_df_w$`Attempts top 10` - efficiency_df_w$Hits_top_ten
+# alpha of the posterior when not in the top 10
+efficiency_df_w$alpha_post_no10 <- efficiency_df_w$alpha_prior + efficiency_df_w$Hits_no_top_ten
+# beta of the posterior when not in the top 10
+efficiency_df_w$beta_post_no10 <- efficiency_df_w$beta_prior + 
+  efficiency_df_w$`Attempts no top 10` - efficiency_df_w$Hits_no_top_ten
+
+
+(efficiency_df)
+efficiency_df_w
 ```
 
 
 
+
+
+
+```{r}
+# Function to compute the mode of the beta
+mode_beta <- function(alpha, beta){
+  return( (alpha - 1)/(alpha + beta - 2) )
+}
+```
+
+
+```{r}
+efficiency_df$mode_post_no10 <- mode_beta(efficiency_df$alpha_post_no10, efficiency_df$beta_post_no10)
+efficiency_df$mode_post_10 <- mode_beta(efficiency_df$alpha_post_10, efficiency_df$beta_post_10)
+
+efficiency_df_w$mode_post_no10 <- mode_beta(efficiency_df_w$alpha_post_no10, efficiency_df_w$beta_post_no10)
+efficiency_df_w$mode_post_10 <- mode_beta(efficiency_df_w$alpha_post_10, efficiency_df_w$beta_post_10)
+```
+
+
+
+
+```{r}
+efficiency_df$mode_eff <- (efficiency_df$mode_post_no10 - efficiency_df$mode_post_10)/
+                          efficiency_df$mode_post_no10
+max_eff <- efficiency_df[which.max(efficiency_df$mode_eff),]
+min_eff <- efficiency_df[which.min(efficiency_df$mode_eff),]
+
+
+
+efficiency_df_w$mode_eff <- (efficiency_df_w$mode_post_no10 - efficiency_df_w$mode_post_10)/
+                          efficiency_df_w$mode_post_no10
+max_eff_w <- efficiency_df_w[which.max(efficiency_df_w$mode_eff),]
+min_eff_w <- efficiency_df_w[which.min(efficiency_df_w$mode_eff),]
+```
+
+
+
+
+
+```{r}
+efficiency_list <- list()
+for (athlete in efficiency_df$`Full Names`){
+  efficiency_list[[athlete]] <- 100*(rbeta(n = 10000, shape1 = 
+                                     efficiency_df[efficiency_df$`Full Names`==athlete,]$alpha_post_no10, 
+                                     shape2 =
+                                       efficiency_df[efficiency_df$`Full Names`==athlete,]$beta_post_no10) -
+                            rbeta(n = 10000, shape1 = 
+                                     efficiency_df[efficiency_df$`Full Names`==athlete,]$alpha_post_10, 
+                                     shape2 =
+                                       efficiency_df[efficiency_df$`Full Names`==athlete,]$beta_post_10))/
+                            (rbeta(n = 10000, shape1 = 
+                                     efficiency_df[efficiency_df$`Full Names`==athlete,]$alpha_post_no10, 
+                                     shape2 =
+                                       efficiency_df[efficiency_df$`Full Names`==athlete,]$beta_post_no10))
+                                       
+}
+
+
+
+efficiency_list_w <- list()
+for (athlete in efficiency_df_w$`Full Names`){
+  efficiency_list_w[[athlete]] <- 100*(rbeta(n = 10000, shape1 = 
+                                     efficiency_df_w[efficiency_df_w$`Full Names`==athlete,]$alpha_post_no10, 
+                                     shape2 =
+                                       efficiency_df_w[efficiency_df_w$`Full Names`==athlete,]$beta_post_no10) -
+                            rbeta(n = 10000, shape1 = 
+                                     efficiency_df_w[efficiency_df_w$`Full Names`==athlete,]$alpha_post_10, 
+                                     shape2 =
+                                       efficiency_df_w[efficiency_df_w$`Full Names`==athlete,]$beta_post_10))/
+                            (rbeta(n = 10000, shape1 = 
+                                     efficiency_df_w[efficiency_df_w$`Full Names`==athlete,]$alpha_post_no10, 
+                                     shape2 =
+                                       efficiency_df_w[efficiency_df_w$`Full Names`==athlete,]$beta_post_no10))
+                                       
+}
+```
+
+
+
+```{r}
+bins_fd <- function(vec) {
+  diff(range(vec)) / (2 * IQR(vec) / length(vec)^(1/3))
+}
+```
+
+
+
+```{r}
+plot <- ggplot() +
+        geom_histogram(aes(efficiency_list[['Fourcade Martin ']], y=..density..), 
+                       fill='firebrick', alpha=0.9, color='black', 
+                       bins = bins_fd(efficiency_list[['Fourcade Martin ']])) +
+        geom_histogram(aes(efficiency_list[['Anev Krasimir ']], y=..density..), 
+                       fill='navy', alpha=0.9, color='black', 
+                       bins=bins_fd(efficiency_list[['Anev Krasimir ']])) +
+        theme_bw()
+plot
+```
+Here we can see how Martin Fourcade (red histogram), who appeared the most percentually in the top 10, has a perfect 0 "efficiency". A sympton that he was a cold blooded shooter in the clutch.
+Krasimir (blue histogram) instead maybe lacking a little bit of experience sow his percentages drop considerably... maybe being in thick of things made his rifle tremble with a 10% "efficiency".
+
+
+
+
+```{r}
+plot <- ggplot() +
+        geom_histogram(aes(efficiency_list_w[['Domracheva Darya ']], y=..density..), 
+                       fill='firebrick', alpha=0.9, color='black', 
+                       bins = bins_fd(efficiency_list_w[['Domracheva Darya ']])) +
+        geom_histogram(aes(efficiency_list_w[['Puskarcikova Eva ']], y=..density..), 
+                       fill='navy', alpha=0.9, color='black', 
+                       bins=bins_fd(efficiency_list_w[['Puskarcikova Eva ']])) +
+        theme_bw()
+plot
+```
+
+The biggest difference we notice is how Darya Domracheva (blue histogram) is not perfect like Martin Fourcade as her efficiency deviates from zero. Eva Puskarcikova (red histogram) less used to shooting for high stakes does perform worse but the difference is much smaller... maybe Thomas Bormolini has something to do with it.
+
+
+```{r}
+plot <- ggplot() +
+        geom_histogram(aes(efficiency_list[[min_eff$`Full Names`]], y=..density..), 
+                       fill='firebrick', alpha=0.9, color='black', 
+                       bins = bins_fd(efficiency_list[[min_eff$`Full Names`]])) +
+        geom_histogram(aes(efficiency_list[[max_eff$`Full Names`]], y=..density..), 
+                       fill='navy', alpha=0.9, color='black', 
+                       bins=bins_fd(efficiency_list[[max_eff$`Full Names`]])) +
+        theme_bw()
+plot
+```
+In the above plot we see how Felix Leitner (red histogram) even improved his accuracy in meaningful shootings
+while Domink Windisch (blue histogram) was the one who suffered the most in this situation (again Oestersund 2019 is not counted). We all know that Dominik is not the most consistent but when we talk about single races in big events he gifted us all great memories.
+
+```{r}
+plot <- ggplot() +
+        geom_histogram(aes(efficiency_list_w[[min_eff_w$`Full Names`]], y=..density..), 
+                       fill='firebrick', alpha=0.9, color='black', 
+                       bins = bins_fd(efficiency_list_w[[min_eff_w$`Full Names`]])) +
+        geom_histogram(aes(efficiency_list_w[[max_eff_w$`Full Names`]], y=..density..), 
+                       fill='navy', alpha=0.9, color='black', 
+                       bins=bins_fd(efficiency_list_w[[max_eff_w$`Full Names`]])) +
+        theme_bw()
+plot
+```
+```{r}
+min_eff_w$`Full Names`
+max_eff_w$`Full Names`
+```
+Laena Hacki here takes the prize of having the coldest blood while Mona Brorsson which is known for her podium-loosing last shots is indeed the biathlete with the highest "efficiency"
+
+
+```{r}
+names_ordered <- names(named_percentages[rev(order_perc)])
+
+
+plot <- ggplot() +
+        geom_density(aes(efficiency_list[[names_ordered[1]]], y=..density..,
+                           color=names_ordered[1]) 
+                       , alpha=0.5, lwd=1) +
+        geom_density(aes(efficiency_list[[names_ordered[6]]], y=..density..,
+                          color= names_ordered[6]), 
+                        alpha=0.5, lwd=1) +
+        geom_density(aes(efficiency_list[[names_ordered[7]]], y=..density..,
+                           color =  names_ordered[7]) 
+                       , alpha=0.5, lwd=1) +
+        geom_density(aes(efficiency_list[[names_ordered[14]]], y=..density..,
+                           color= names_ordered[14]), 
+                        alpha=0.5, lwd=1) +
+        geom_density(aes(efficiency_list[[names_ordered[9]]], y=..density..,
+                           color= names_ordered[9]), 
+                        alpha=0.5, lwd=1) +
+        geom_density(aes(efficiency_list[[names_ordered[11]]], y=..density..,
+                           color= names_ordered[11]), 
+                        alpha=0.5, lwd=1) +
+        geom_density(aes(efficiency_list[[names_ordered[12]]], y=..density..,
+                           color= names_ordered[12]), 
+                        alpha=0.5, lwd=1) +
+        labs(x='Effciency', y='PDF') +
+  
+        theme_bw()
+plot
+```
+In this density estimate plot the each biathlete represented has a meaningful statistics regarding both 
+the presences in the top 10 and the presences outside of it.
+We can see how Emil Svendsen noticeably improves with an efficiency of almost -10%, while Christiansen who is notoriously doesn't posses the heart of a lion ruins his percentages. Simon Eder who is going to become the athlete with the most 0s in history has an almost dramatic drop for his standards in standing shooting when entering the last shooting range in the top 10.
+In Vetle's defense in the Beijiing olympics he pulled out a couple of rabbits from his hat by winning the relay on the last shot and likewise the mass start bronze.
+
+
+
+
+```{r}
+names_ordered_w <- names(named_percentages_w[rev(order_perc_w)])
+
+
+plot <- ggplot() +
+        geom_density(aes(efficiency_list_w[[names_ordered_w[1]]], y=..density..,
+                           color=names_ordered_w[1]) 
+                       , alpha=0.5, lwd=1) +
+        geom_density(aes(efficiency_list_w[[names_ordered_w[6]]], y=..density..,
+                          color= names_ordered_w[6]), 
+                        alpha=0.5, lwd=1) +
+        geom_density(aes(efficiency_list_w[[names_ordered_w[33]]], y=..density..,
+                           color =  names_ordered_w[33]) 
+                       , alpha=0.5, lwd=1) +
+        geom_density(aes(efficiency_list_w[[names_ordered_w[4]]], y=..density..,
+                           color= names_ordered_w[4]), 
+                        alpha=0.5, lwd=1) +
+        geom_density(aes(efficiency_list_w[[names_ordered_w[45]]], y=..density..,
+                           color= names_ordered_w[45]), 
+                        alpha=0.5, lwd=1) +
+        geom_density(aes(efficiency_list_w[[names_ordered_w[18]]], y=..density..,
+                           color= names_ordered_w[18]), 
+                        alpha=0.5, lwd=1) +
+        geom_density(aes(efficiency_list_w[[names_ordered_w[12]]], y=..density..,
+                           color= names_ordered_w[12]), 
+                        alpha=0.5, lwd=1) +
+        labs(x='Effciency', y='PDF') +
+  
+        theme_bw()
+plot
+```
+In this set of highly represented athletes we see how consistent are the 2 italians with Lisa that improves her performance and with Dorothea that slightly makes it worse (in terms of "efficiency").
+We can see how respecting her family traditions Kristina Reztsova has a very high "efficiency" volatility,  she performs good on skis but she isn't quite the cross country skier lend to biathlon like her mother Anfisa was.
 
 
 
