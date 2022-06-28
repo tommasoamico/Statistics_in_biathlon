@@ -1,0 +1,16 @@
+model {
+
+#likelihood
+for (i in 1:n){
+        X[i] ~ dnorm(mean, precision)
+
+}
+
+#prior
+mean~dnorm(0, 1)
+precision ~ dlnorm(-1/2,(1/log(2)))
+
+
+
+}
+
