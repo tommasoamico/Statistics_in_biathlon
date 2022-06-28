@@ -1696,52 +1696,68 @@ We can see how respecting her family traditions Kristina Reztsova has a very hig
 
 ```{r}
 # Analytical part
+
+# Computing the total attempts
 top_names_tot_att10 <- sum(efficiency_df$`Attempts top 10`)
 top_names_tot_att10_w <- sum(efficiency_df_w$`Attempts top 10`)
 
+# Computing the total hits
 top_names_tot_hit10 <- sum(efficiency_df$Hits_top_ten)
 top_names_tot_hit10_w <- sum(efficiency_df_w$Hits_top_ten)
 
+# Computing the total attempts outside the top 10
 top_names_tot_att_no10 <- sum(efficiency_df$`Attempts no top 10`)
 top_names_tot_att_no10_w <- sum(efficiency_df_w$`Attempts no top 10`)
 
+# Computing the total hits outside the top 10
 top_names_tot_hit_no10 <- sum(efficiency_df$Hits_no_top_ten)
 top_names_tot_hit_no10_w <- sum(efficiency_df_w$Hits_no_top_ten)
 
+# Computing the desired mode for teh prior
 mode_men <- (top_names_tot_hit10 + top_names_tot_hit_no10)/
   (top_names_tot_att10 + top_names_tot_att_no10)
 mode_women <- (top_names_tot_hit10_w + top_names_tot_hit_no10_w)/
   (top_names_tot_att10_w + top_names_tot_att_no10_w)
 
+# Computing the desired standard deviation for the prior
 std_men <- sd(hit_miss$Probabilities)
 std_women <- sd(hit_miss_w$Probabilities)
 
+# Computing the alpha prior
 alpha_prior_men <- unlist(map2(.x= mode_men, .y=std_men^2, .f=root_func))
 alpha_prior_women <- unlist(map2(.x= mode_women, .y=std_women^2, .f=root_func))
 
+# Computing the beta prior
 beta_prior_men <- beta(mode = mode_men, alpha = alpha_prior_men)
 beta_prior_women <- beta(mode = mode_women, alpha = alpha_prior_women)
 
+# Computing the alpha posterior
 alpha_post_men_10 <- alpha_prior_men + top_names_tot_hit10
 alpha_post_women_10 <- alpha_prior_women + top_names_tot_hit10_w
 
+# Computing the alpha posterior outside the top 10 
 alpha_post_men_no10 <- alpha_prior_men + top_names_tot_hit_no10
 alpha_post_women_no10 <- alpha_prior_women + top_names_tot_hit_no10_w
 
+# Computing the beta posterior
 beta_post_men_10 <- beta_prior_men + top_names_tot_att10 - top_names_tot_hit10
 beta_post_women_10 <- beta_prior_women + top_names_tot_att10_w - top_names_tot_hit10_w
 
+# Computing the beta posterior outside the top 10
 beta_post_men_no10 <- beta_prior_men + top_names_tot_att_no10 - top_names_tot_hit_no10
 beta_post_women_no10 <- beta_prior_women + top_names_tot_att_no10_w - top_names_tot_hit_no10_w
 
+# Mean of the beta distribution posterior
 mean_10_men <- alpha_post_men_10/(alpha_post_men_10+beta_post_men_10)
 mean_10_women <- alpha_post_women_10/(alpha_post_women_10+beta_post_women_10)
 
+# Variance of the beta distribution posterior
 var_10_men <- (alpha_post_men_10*beta_post_men_10)/( (alpha_post_men_10 + beta_post_men_10)^2*
                                                (alpha_post_men_10 + beta_post_men_10 + 1))
 var_10_women <- (alpha_post_women_10*beta_post_women_10)/( (alpha_post_women_10 + beta_post_women_10)^2*
                                                (alpha_post_women_10 + beta_post_women_10 + 1))
 
+# Variance of the beta distribution posterior outside the top 10
 var_no10_men <- (alpha_post_men_no10*beta_post_men_no10)/( (alpha_post_men_no10 + beta_post_men_no10)^2*
                                                (alpha_post_men_no10 + beta_post_men_no10 + 1))
 var_no10_women <- (alpha_post_women_no10*beta_post_women_no10)/
@@ -1754,6 +1770,7 @@ var_no10_women <- (alpha_post_women_no10*beta_post_women_no10)/
 
 
 ```{r}
+# Defining the Jags arrays
 n_samples <- 2000
 jags_men_10 <- 100*(rbeta(n = n_samples, shape1 = alpha_post_men_no10, shape2 = beta_post_men_no10) -
                   rbeta(n = n_samples, shape1 = alpha_post_men_10, shape2 = beta_post_men_10))/
@@ -1771,6 +1788,7 @@ jags_total <- jags_men_10 - jags_women_10
 
 
 ```{r}
+# Defining the Jags model
 data <- list(X = jags_total, n = n_samples)
 model <- jags.model(file = 'normal.bug', n.chains = 4, data = data)
 
@@ -1782,7 +1800,7 @@ print(summary(chain))
 
 
 ```{r}
-
+# Flattening the Jags chains
 mean_jags <- c(unname(chain[[1]])[,1], unname(chain[[2]])[,1], unname(chain[[3]])[,1], unname(chain[[4]])[,1])
 precision_jags <- c(unname(chain[[1]])[,2], 
                     unname(chain[[2]])[,2], unname(chain[[3]])[,2], unname(chain[[4]])[,2])
@@ -1791,6 +1809,7 @@ precision_jags <- c(unname(chain[[1]])[,2],
 
 
 ```{r}
+# Plot of the mean parameter
 plot <- ggplot() +
         geom_histogram(aes(mean_jags, y=..density..), 
                        fill='firebrick', alpha=0.9, color='black', 
@@ -1808,6 +1827,7 @@ mean_max <- (ggplot_build(plot)$data[[1]]$xmax[y_max_idx] + ggplot_build(plot)$d
 
 
 ```{r}
+# Plot of the precision paramters
 plot <- ggplot() +
         geom_histogram(aes(precision_jags, y=..density..), 
                        fill='firebrick', alpha=0.9, color='black', 
@@ -1826,12 +1846,14 @@ precision_max <- (ggplot_build(plot)$data[[1]]$xmax[y_max_idx] +
 ```
 
 ```{r}
+# Standard deviation given by the posterior
 std_max <- sqrt(1/precision_max)
 std_max
 ```
 
 
 ```{r}
+# Normal given our retrieved meanand variance 
 x_axis <- seq(-5, 5, 0.001)
 plot <- ggplot() +
         geom_line(aes(x=x_axis, y=dnorm(x = x_axis, mean = mean_max, sd = std_max))) +
@@ -1841,6 +1863,7 @@ plot <- ggplot() +
 plot
 ```
 ```{r}
+# Visual representation of the chains
 plot(chain)
 ```
 
@@ -1850,12 +1873,14 @@ plot(chain)
 
 
 ```{r}
+# Selecting the years were we have shooting data
 years_shooting <-years[3:length(years)]
 ```
 
 
 
 ```{r}
+# Importing thr shooting data for women
 df_shooting_women <- data.frame()
 
 
@@ -1940,13 +1965,14 @@ for (i in seq_along(years_shooting)){
 
 
 ```{r}
-df_shooting_women
+head(df_shooting_women)
 ```
 
 
 
 
 ```{r}
+# Importing the shooting data for women
 df_shooting_men <- data.frame()
 
 
@@ -2032,6 +2058,7 @@ for (i in seq_along(years_shooting)){
 
 
 ```{r}
+# Restricting to individual competition
 shooting_ind_men <- df_shooting_men[df_shooting_men$race_type == 'Individual',]
 shooting_ind_women <- df_shooting_women[df_shooting_women$race_type == 'Individual',]
 ```
@@ -2041,6 +2068,7 @@ shooting_ind_women <- df_shooting_women[df_shooting_women$race_type == 'Individu
 
 
 ```{r}
+# The function to extract the outcome of the last shot
 last_shot <- function(x){
   string <- unlist(strsplit((x),""))
   shots <- string[seq(length(string)-4, length(string))]
@@ -2055,12 +2083,14 @@ last_shot <- function(x){
 
 
 ```{r}
+# Applying the last shot function
 shooting_ind_men$last_shot <- sapply(X = shooting_ind_men$Shooting.4, FUN = last_shot)
 shooting_ind_women$last_shot <- sapply(X = shooting_ind_women$Shooting.4, FUN = last_shot)
 ```
 
 
 ```{r}
+# The function to extract the outcome the first 19 shots
 hits_19 <- function(shooting1, shooting2, shooting3, shooting4){
   string_1 <- unlist(strsplit((shooting1),""))
   string_2 <- unlist(strsplit((shooting2),""))
@@ -2089,6 +2119,7 @@ hits_19 <- function(shooting1, shooting2, shooting3, shooting4){
 
 
 ```{r}
+# Defining the lists that the pmap function takes in input
 list_men_19 <- list(shooting1 = shooting_ind_men$Shooting.1,
                     shooting2 = shooting_ind_men$Shooting.2,
                     shooting3 = shooting_ind_men$Shooting.3,
@@ -2099,6 +2130,7 @@ list_women_19 <- list(shooting1 = shooting_ind_women$Shooting.1,
                     shooting3 = shooting_ind_women$Shooting.3,
                     shooting4 = shooting_ind_women$Shooting.4)
 
+# Calling the pmap function to retrieve the outpu of the first 19 shots
 shooting_ind_men$shots_19 <- unlist(pmap(.l = list_men_19, .f = hits_19))
 shooting_ind_women$shots_19 <- unlist(pmap(.l = list_women_19, .f = hits_19))
 ```
@@ -2109,6 +2141,7 @@ shooting_ind_women$shots_19 <- unlist(pmap(.l = list_women_19, .f = hits_19))
 
 
 ```{r}
+# Restricting the analysis to perfect shots through the first 19 attempts
 under_pressure_women <- shooting_ind_women[shooting_ind_women$shots_19==19,]
 under_pressure_men <- shooting_ind_men[shooting_ind_men$shots_19==19,]
 ```
@@ -2116,7 +2149,7 @@ under_pressure_men <- shooting_ind_men[shooting_ind_men$shots_19==19,]
 
 
 ```{r}
-under_pressure_men
+head(under_pressure_men)
 ```
 
 
@@ -2125,6 +2158,7 @@ under_pressure_men
 
 
 ```{r}
+# Doing the same thing of the individuals for the remaining 4 range races
 shoothing_pursuit_men <- df_shooting_men[df_shooting_men$race_type == 'Pursuit',]
 shoothing_pursuit_women <- df_shooting_women[df_shooting_women$race_type == 'Pursuit',]
 shoothing_pursuit_men$last_shot <- sapply(X = shoothing_pursuit_men$Shooting.4, FUN = last_shot)
@@ -2177,8 +2211,7 @@ df_pressure_w <- rbind(shoothing_pursuit_women, shoothing_mass_start_women)
 
 
 ```{r}
-
-
+# The hits and the misses of the 20-th target for individuals and then for pursuits and mass starts
 y_ind_m <- length(under_pressure_men$last_shot[under_pressure_men$last_shot=='Hit'])
 y_ind_w <- length(under_pressure_women$last_shot[under_pressure_women$last_shot=='Hit'])
 n_ind_m <- nrow(under_pressure_men)
@@ -2193,11 +2226,13 @@ n_oth_w <- nrow(df_pressure_w)
 
 
 ```{r}
+# The posterior parameters for individuals
 alpha_post_ind_m <- alpha_prior_men + y_ind_m
 alpha_post_ind_w <- alpha_prior_women + y_ind_m
 beta_post_ind_m <- alpha_prior_men + n_ind_m - y_ind_m
 beta_post_ind_w <- alpha_prior_women + n_ind_w - y_ind_w
 
+# Probability of hitting the 20-th shot in residuals and mass starts
 threshold_m <- y_oth_m/n_oth_m
 threshold_w <- y_oth_w/n_oth_w
 ```
@@ -2207,6 +2242,7 @@ The Null hypothesis H0 is that in individuals, the very last shot has a probabil
 
 
 ```{r}
+# Hypothesis testing for men
 x_axis <- seq(0, 1, 0.001)
 plot <- ggplot() +
         geom_line(aes(x=x_axis, y=dbeta(x = x_axis, shape1 = alpha_post_ind_m,
@@ -2218,6 +2254,7 @@ plot
 
 
 ```{r}
+# Integrating the null hypothesis for men
 int_func_m <- function(x){
   return(dbeta(x = x, shape1 = alpha_post_ind_m,
                                         shape2 = beta_post_ind_m))
@@ -2230,6 +2267,7 @@ integrate(f = int_func_m, lower = threshold_m, upper=1)$value
 
 
 ```{r}
+# Integrating the null hypothesis for women
 x_axis <- seq(0, 1, 0.001)
 plot <- ggplot() +
         geom_line(aes(x=x_axis, y=dbeta(x = x_axis, shape1 = alpha_post_ind_w,
