@@ -1734,8 +1734,8 @@ beta_post_women_10 <- beta_prior_women + top_names_tot_att10_w - top_names_tot_h
 beta_post_men_no10 <- beta_prior_men + top_names_tot_att_no10 - top_names_tot_hit_no10
 beta_post_women_no10 <- beta_prior_women + top_names_tot_att_no10_w - top_names_tot_hit_no10_w
 
-mean_10_men <- alpha_post_men_10/(alpha_post_men_10+alpha_post_men_no10)
-mean_10_women <- alpha_post_men_10/(alpha_post_men_10+alpha_post_men_no10)
+mean_10_men <- alpha_post_men_10/(alpha_post_men_10+beta_post_men_10)
+mean_10_women <- alpha_post_women_10/(alpha_post_women_10+beta_post_women_10)
 
 var_10_men <- (alpha_post_men_10*beta_post_men_10)/( (alpha_post_men_10 + beta_post_men_10)^2*
                                                (alpha_post_men_10 + beta_post_men_10 + 1))
@@ -1745,7 +1745,7 @@ var_10_women <- (alpha_post_women_10*beta_post_women_10)/( (alpha_post_women_10 
 var_no10_men <- (alpha_post_men_no10*beta_post_men_no10)/( (alpha_post_men_no10 + beta_post_men_no10)^2*
                                                (alpha_post_men_no10 + beta_post_men_no10 + 1))
 var_no10_women <- (alpha_post_women_no10*beta_post_women_no10)/
-  ( (alpha_post_women_no10 + beta_post_men_no10)^2*
+  ( (alpha_post_women_no10 + beta_post_women_no10)^2*
                                                (alpha_post_women_no10 + beta_post_women_no10 + 1))
 
 ```
@@ -2113,9 +2113,11 @@ under_pressure_women <- shooting_ind_women[shooting_ind_women$shots_19==19,]
 under_pressure_men <- shooting_ind_men[shooting_ind_men$shots_19==19,]
 ```
 
-AAAAAAAAAA! Pyengchang 2016-2017 pursuit's shooting not present WOMEN
-AAAAAAAAAA! Khontiolahti 2017-2018 sprints's shooting not present WOMEN
 
+
+```{r}
+under_pressure_men
+```
 
 
 
@@ -2200,7 +2202,7 @@ threshold_m <- y_oth_m/n_oth_m
 threshold_w <- y_oth_w/n_oth_w
 ```
 
-
+The Null hypothesis H0 is that in individuals, the very last shot has a probability of being hit, that is greater or equal the in every other race (when hitting the first 19)
 
 
 
