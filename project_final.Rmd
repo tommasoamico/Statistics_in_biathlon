@@ -1058,21 +1058,29 @@ order_perc <- order(percentages)
 
 
 
-```{r}
+```{r fig.align="center", fig.width=5 , fig.height=3, warning=FALSE}
 plot <- ggplot() +
         geom_col(aes(x=names(named_percentages) , y=sort(unname(percentages)))) +
         
         scale_x_discrete(labels = names(named_percentages)[order_perc]) +
         
         theme_bw() +
-        theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5)) +
+        theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.38)) +
         geom_col(aes(x=31 , y=unname(named_percentages[names(named_percentages)=='Hofer Lukas ']))
                  , fill='blue', color='black') +
         geom_col(aes(x=5 , y=unname(named_percentages[names(named_percentages)=='Windisch Dominik ']))
                  , fill='blue', color='black') +
         geom_col(aes(x=50 , y=unname(named_percentages[names(named_percentages)=='Fourcade Martin ']))
                  , fill='firebrick', color='black') +
-        labs(x = '', y = '% of times entering in the top 10', title = 'Concistency of the top biathletes')
+        labs(x = '', y = '% of times entering in the top 10', 
+             title = 'Concistency of the top biathletes - Men')+
+                          theme(plot.title = element_text(size=20),
+                          axis.text.x = element_text(size=12),
+                          axis.text.y = element_text(size=12),
+                          axis.title.x = element_text(size=15),
+                          axis.title.y = element_text(size=15))+
+                    scale_y_discrete(limits=seq(0,90,15), labels=seq(0,90,15))
+
 plot
 
 ```
@@ -1082,22 +1090,30 @@ In blue we can see the two Italians represented, as we know Luki is by far the m
 p.s. that Oestersund mass start isn't represented in this part of the analysis as Dominik entered the last shooting range outside the top 10... we all know the ending though.
 
 
-```{r}
+```{r fig.align="center", fig.width=5 , fig.height=3, warning=FALSE}
 plot <- ggplot() +
         geom_col(aes(x=names(named_percentages_w) , y=sort(unname(percentages_w)))) +
         
         scale_x_discrete(labels = names(named_percentages_w)[order_perc_w]) +
         
         theme_bw() +
-        theme(axis.text.x = element_text(angle = 90, hjust=+1, vjust = 0.5)) +
+        theme(axis.text.x = element_text(angle = 90, hjust=+1, vjust = 0.38)) +
         geom_col(aes(x=46 , y=unname(named_percentages_w[names(named_percentages_w)=='Wierer Dorothea ']))
                  , fill='blue', color='black') +
         geom_col(aes(x=17 , y=unname(named_percentages_w[names(named_percentages_w)=='Vittozzi Lisa ']))
                  , fill='blue', color='black') +
         geom_col(aes(x=49 , y=unname(named_percentages_w[names(named_percentages_w)=='Domracheva Darya ']))
                  , fill='firebrick', color='black') +
-        labs(x = '', y = '% of times entering in the top 10', title = 'Concistency of the top biathletes')
+        labs(x = '', y = '% of times entering in the top 10', 
+             title = 'Concistency of the top biathletes - Women')+
+                          theme(plot.title = element_text(size=20),
+                          axis.text.x = element_text(size=12),
+                          axis.text.y = element_text(size=12),
+                          axis.title.x = element_text(size=15),
+                          axis.title.y = element_text(size=15))+
+                    scale_y_discrete(limits=seq(0,75,15), labels=seq(0,75,15))
 plot
+
 
 ```
 In the women's case Domracheva, Dahlmeier and Koukalova are in a class of their own, we can notice how there isn't a big drop in the percentage of times entering the last range in the top 10 from Domracheva to Dahlmeier contrary to what happened in the men's case.
@@ -1355,7 +1371,8 @@ head(top_names_hit_miss_w)
 
 
 
-```{r}
+```{r fig.align="center", fig.width=4 , fig.height=2}
+
 x_axis <- seq(0, 1, 0.001)
 min_idx <- which.min(top_names_hit_miss$Probabilities)
 min_prob <- top_names_hit_miss[min_idx,]
@@ -1363,15 +1380,20 @@ min_prob <- top_names_hit_miss[min_idx,]
 max_idx <- which.max(top_names_hit_miss$Probabilities)
 max_prob <- top_names_hit_miss[max_idx,]
 
-plot <- ggplot() +
-        geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = min_prob$alpha, shape2 = min_prob$beta),
-                                        color = as.character(min_prob$Names))) +
-        geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = max_prob$alpha, shape2 = max_prob$beta),
-                                        color = as.character(max_prob$Names))) +
-        labs(color = 'Legend', x='Probability P', y='Prior PDF', title=
-               'Prior of the best and worst standing shooters') +
-        scale_color_manual(values= c("Kuehn Johannes " = 'firebrick', "Birnbacher Andreas " = 'navy')) +
-        theme_bw()
+plot <- ggplot() + theme_bw()+
+        geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = min_prob$alpha, shape2 = min_prob$beta), color = as.character(min_prob$Names)), lwd =1.2) +
+        geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = max_prob$alpha, shape2 = max_prob$beta), color = as.character(max_prob$Names)), lwd =1.2) +
+        labs(color = 'Athlete', x='Probability P', y='Prior PDF', 
+             title= 'Prior of the best and worst standing shooters - Men') +
+                   theme(plot.title = element_text(size=15),
+                         legend.text = element_text(size=10),
+                          legend.title = element_text(size=12),
+                          axis.text.x = element_text(size=10),
+                          axis.text.y = element_text(size=10),
+                          axis.title.x = element_text(size=12),
+                          axis.title.y = element_text(size=12)) +
+ scale_color_manual(values= c("Kuehn Johannes " = 'firebrick', 
+                              "Birnbacher Andreas " = 'navy'))
 plot
 ```
 
@@ -1380,7 +1402,7 @@ We see how the prior probability of a sharp-shoother like Birnbacher is peaked f
 
 
 
-```{r}
+```{r fig.align="center", fig.width=4 , fig.height=2}
 x_axis <- seq(0, 1, 0.001)
 min_idx_w <- which.min(top_names_hit_miss_w$Probabilities)
 min_prob_w <- top_names_hit_miss_w[min_idx_w,]
@@ -1388,22 +1410,28 @@ min_prob_w <- top_names_hit_miss_w[min_idx_w,]
 max_idx_w <- which.max(top_names_hit_miss_w$Probabilities)
 max_prob_w <- top_names_hit_miss_w[max_idx_w,]
 
-plot <- ggplot() +
-        geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = min_prob_w$alpha, shape2 = min_prob_w$beta),
-                                        color = as.character(min_prob_w$Names))) +
-        geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = max_prob_w$alpha, shape2 = max_prob_w$beta),
-                                        color = as.character(max_prob_w$Names))) +
-        labs(color = 'Legend', x='Probability P', y='Prior PDF', title=
-               'Prior of the best and worst standing shooters') +
-        scale_color_manual(values= c("Sola Hanna " = 'firebrick', "Skardino Nadezhda " = 'navy')) +
-        theme_bw()
+plot <- ggplot() +  theme_bw() + 
+  geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = min_prob_w$alpha, shape2 = min_prob_w$beta), color = as.character(min_prob_w$Names)), lwd =1.2) +
+        geom_line(aes(x=x_axis, y=dbeta(x=x_axis, shape1 = max_prob_w$alpha, shape2 = max_prob_w$beta), color = as.character(max_prob_w$Names)), lwd =1.2) +
+        labs(color = 'Athlete', x='Probability P', y='Prior PDF', 
+             title='Prior of the best and worst standing shooters - Women') +
+                   theme(plot.title = element_text(size=15),
+                         legend.text = element_text(size=10),
+                          legend.title = element_text(size=12),
+                          axis.text.x = element_text(size=10),
+                          axis.text.y = element_text(size=10),
+                          axis.title.x = element_text(size=12),
+                          axis.title.y = element_text(size=12)) +
+        scale_color_manual(values= c("Sola Hanna " = 'firebrick', 
+                                     "Skardino Nadezhda " = 'navy'))
+       
 plot
 ```
 Also here we notice how the a strong skier but inconsistent shooter like Hanna Sola has the prior peaked at the worst percentage while in this battle within the Belarus' borders Skardino performs much better.
 
 
 
-```{r}
+```{r fig.align="center", fig.width=4 , fig.height=2.2}
 plot <- ggplot() +
         geom_point(aes(x=rep(x_axis, nrow(top_names_hit_miss)),
                        y=dbeta(x=rep(x_axis, nrow(top_names_hit_miss)), 
@@ -1411,24 +1439,23 @@ plot <- ggplot() +
                         ),color=rep(x_axis, nrow(top_names_hit_miss))), size=0.8) +
         
         labs(color = 'Probability \nColor map', x='P', y='Prior PDF', title=
-               'Priors computed') +
+               'Priors computed - Men') +
         
         theme_bw()
 plot
 ```
 
-```{r}
+```{r fig.align="center", fig.width=4 , fig.height=2.2}
 x_axis <- seq(0, 1, 0.0001)
-plot <- ggplot() +
+plot <- ggplot() + theme_bw() +
         geom_point(aes(x=rep(x_axis, nrow(top_names_hit_miss_w)),
                        y=dbeta(x=rep(x_axis, nrow(top_names_hit_miss_w)), 
                         shape1 = top_names_hit_miss_w$alpha, shape2 = top_names_hit_miss_w$beta 
                         ),color=rep(x_axis, nrow(top_names_hit_miss_w))), size=0.8) +
         
         labs(color = 'Probability \nColor map', x='P', y='Prior PDF', title=
-               'Priors computed') +
-        
-        theme_bw()
+               'Priors computed - Women') 
+       
 plot
 ```
 We see how here the transition from low percentages to high ones is much smoother than in the men case where we see a couple of low but very consistent percentages.
@@ -1573,15 +1600,27 @@ bins_fd <- function(vec) {
 
 
 
-```{r}
-plot <- ggplot() +
-        geom_histogram(aes(efficiency_list[['Fourcade Martin ']], y=..density..), 
-                       fill='firebrick', alpha=0.9, color='black', 
-                       bins = bins_fd(efficiency_list[['Fourcade Martin ']])) +
-        geom_histogram(aes(efficiency_list[['Anev Krasimir ']], y=..density..), 
-                       fill='navy', alpha=0.9, color='black', 
+```{r fig.align="center", fig.width=4 , fig.height=2.2,warning=FALSE}
+
+plot <- ggplot() +  theme_bw() +
+        geom_histogram(aes(efficiency_list[['Fourcade Martin ']], y=..density.. , fill="Martin Fourcade "), alpha=0.9, color='white', 
+           bins = bins_fd(efficiency_list[['Fourcade Martin ']])) +
+        geom_histogram(aes(efficiency_list[['Anev Krasimir ']], y=..density.. , fill='Anev Krasimir '),  alpha=0.9, color='white', 
                        bins=bins_fd(efficiency_list[['Anev Krasimir ']])) +
-        theme_bw()
+  
+             labs(fill = 'Athlete', x='Efficiency', y='PDF', 
+                title='Efficiency of the most and least consistent biathlete - Men') +
+                   theme(plot.title = element_text(size=15),
+                         legend.text = element_text(size=10),
+                          legend.title = element_text(size=12),
+                          axis.text.x = element_text(size=10),
+                          axis.text.y = element_text(size=10),
+                          axis.title.x = element_text(size=12),
+                          axis.title.y = element_text(size=12)) +
+        scale_fill_manual(values= c('Martin Fourcade ' = 'firebrick', 
+                                    'Anev Krasimir ' = 'navy')) +
+          scale_x_discrete(limits=seq(-20,40,10), labels=seq(-20,40,10))
+       
 plot
 ```
 Here we can see how Martin Fourcade (red histogram), who appeared the most percentually in the top 10, has a perfect 0 "efficiency". A sympton that he was a cold blooded shooter in the clutch.
@@ -1590,70 +1629,103 @@ Krasimir (blue histogram) instead maybe lacking a little bit of experience sow h
 
 
 
-```{r}
-plot <- ggplot() +
-        geom_histogram(aes(efficiency_list_w[['Domracheva Darya ']], y=..density..), 
-                       fill='firebrick', alpha=0.9, color='black', 
+```{r fig.align="center", fig.width=4 , fig.height=2.2,warning=FALSE}
+
+plot <- ggplot() + theme_bw() +
+        geom_histogram(aes(efficiency_list_w[['Domracheva Darya ']], y=..density.. , 
+                       fill='Domracheva Darya '), alpha=0.8, color='white', 
                        bins = bins_fd(efficiency_list_w[['Domracheva Darya ']])) +
-        geom_histogram(aes(efficiency_list_w[['Puskarcikova Eva ']], y=..density..), 
-                       fill='navy', alpha=0.9, color='black', 
-                       bins=bins_fd(efficiency_list_w[['Puskarcikova Eva ']])) +
-        theme_bw()
+        geom_histogram(aes(efficiency_list_w[['Puskarcikova Eva ']], y=..density.. , 
+                       fill='Puskarcikova Eva '), alpha=0.8, color='white', 
+                       bins=bins_fd(efficiency_list_w[['Puskarcikova Eva ']])) + 
+  
+         labs(fill = 'Athlete', x='Efficiency', y='PDF', 
+                title='Efficiency of the most and least consistent biathletes - Women') +
+                   theme(plot.title = element_text(size=15),
+                         legend.text = element_text(size=10),
+                          legend.title = element_text(size=12),
+                          axis.text.x = element_text(size=10),
+                          axis.text.y = element_text(size=10),
+                          axis.title.x = element_text(size=12),
+                          axis.title.y = element_text(size=12)) +
+        scale_fill_manual(values= c('Domracheva Darya ' = 'firebrick', 
+                                    'Puskarcikova Eva ' = 'navy')) +
+          scale_x_discrete(limits=seq(-30,30,10), labels=seq(-30,30,10))
+        
 plot
 ```
 
 The biggest difference we notice is how Darya Domracheva (blue histogram) is not perfect like Martin Fourcade as her efficiency deviates from zero. Eva Puskarcikova (red histogram) less used to shooting for high stakes does perform worse but the difference is much smaller... maybe Thomas Bormolini has something to do with it.
 
 
-```{r}
-plot <- ggplot() +
-        geom_histogram(aes(efficiency_list[[min_eff$`Full Names`]], y=..density..), 
-                       fill='firebrick', alpha=0.9, color='black', 
+```{r fig.align="center", fig.width=4 , fig.height=2.2, warning=FALSE}
+
+plot <- ggplot() + theme_bw() + 
+        geom_histogram(aes(efficiency_list[[min_eff$`Full Names`]], y=..density.. , 
+                       fill='Leitner Felix '), alpha=0.9, color='white', 
                        bins = bins_fd(efficiency_list[[min_eff$`Full Names`]])) +
-        geom_histogram(aes(efficiency_list[[max_eff$`Full Names`]], y=..density..), 
-                       fill='navy', alpha=0.9, color='black', 
+        geom_histogram(aes(efficiency_list[[max_eff$`Full Names`]], y=..density.. , 
+                       fill='Windisch Dominik '), alpha=0.9, color='white', 
                        bins=bins_fd(efficiency_list[[max_eff$`Full Names`]])) +
-        theme_bw()
+  
+         labs(fill = 'Athlete', x='Efficiency', y='PDF', 
+                title='Athletes with the best and worst efficiency - Men') +
+                   theme(plot.title = element_text(size=15),
+                         legend.text = element_text(size=10),
+                          legend.title = element_text(size=10),
+                          axis.text.x = element_text(size=10),
+                          axis.text.y = element_text(size=10),
+                          axis.title.x = element_text(size=12),
+                          axis.title.y = element_text(size=12)) +
+        scale_fill_manual(values= c('Leitner Felix ' = 'firebrick', 
+                                    'Windisch Dominik ' = 'navy')) +
+          scale_x_discrete(limits=seq(-30,50,10), labels=seq(-30,50,10))
+        
 plot
 ```
 In the above plot we see how Felix Leitner (red histogram) even improved his accuracy in meaningful shootings
 while Domink Windisch (blue histogram) was the one who suffered the most in this situation (again Oestersund 2019 is not counted). We all know that Dominik is not the most consistent but when we talk about single races in big events he gifted us all great memories.
 
-```{r}
-plot <- ggplot() +
-        geom_histogram(aes(efficiency_list_w[[min_eff_w$`Full Names`]], y=..density..), 
-                       fill='firebrick', alpha=0.9, color='black', 
+```{r fig.align="center", fig.width=4 , fig.height=2.2, warning=FALSE}
+
+plot <- ggplot() + theme_bw()+
+        geom_histogram(aes(efficiency_list_w[[min_eff_w$`Full Names`]], y=..density..,      fill='Haecki Lena '), alpha=0.9, color='white', 
                        bins = bins_fd(efficiency_list_w[[min_eff_w$`Full Names`]])) +
-        geom_histogram(aes(efficiency_list_w[[max_eff_w$`Full Names`]], y=..density..), 
-                       fill='navy', alpha=0.9, color='black', 
+        geom_histogram(aes(efficiency_list_w[[max_eff_w$`Full Names`]], y=..density..,  fill='Brorsson Mona '), alpha=0.9, color='white', 
                        bins=bins_fd(efficiency_list_w[[max_eff_w$`Full Names`]])) +
-        theme_bw()
+  
+           labs(fill = 'Athlete', x='Efficiency', y='PDF', 
+                title='Athletes with the best and worst efficiency - Women') +
+                   theme(plot.title = element_text(size=15),
+                         legend.text = element_text(size=10),
+                          legend.title = element_text(size=12),
+                          axis.text.x = element_text(size=10),
+                          axis.text.y = element_text(size=10),
+                          axis.title.x = element_text(size=12),
+                          axis.title.y = element_text(size=12)) +
+        scale_fill_manual(values= c('Haecki Lena ' = 'firebrick', 
+                                    'Brorsson Mona ' = 'navy')) +
+          scale_x_discrete(limits=seq(-40,50,10), labels=seq(-40,50,10))
+        
+        
 plot
-```
-```{r}
-min_eff_w$`Full Names`
-max_eff_w$`Full Names`
 ```
 Laena Hacki here takes the prize of having the coldest blood while Mona Brorsson which is known for her podium-loosing last shots is indeed the biathlete with the highest "efficiency"
 
 
-```{r}
+```{r fig.align="center", fig.width=5 , fig.height=2.5, warning=FALSE}
+
 names_ordered <- names(named_percentages[rev(order_perc)])
 
 
-plot <- ggplot() +
-        geom_density(aes(efficiency_list[[names_ordered[1]]], y=..density..,
-                           color=names_ordered[1]) 
-                       , alpha=0.5, lwd=1) +
+plot <- ggplot() + theme_bw() +
+  
         geom_density(aes(efficiency_list[[names_ordered[6]]], y=..density..,
                           color= names_ordered[6]), 
                         alpha=0.5, lwd=1) +
         geom_density(aes(efficiency_list[[names_ordered[7]]], y=..density..,
                            color =  names_ordered[7]) 
                        , alpha=0.5, lwd=1) +
-        geom_density(aes(efficiency_list[[names_ordered[14]]], y=..density..,
-                           color= names_ordered[14]), 
-                        alpha=0.5, lwd=1) +
         geom_density(aes(efficiency_list[[names_ordered[9]]], y=..density..,
                            color= names_ordered[9]), 
                         alpha=0.5, lwd=1) +
@@ -1663,9 +1735,16 @@ plot <- ggplot() +
         geom_density(aes(efficiency_list[[names_ordered[12]]], y=..density..,
                            color= names_ordered[12]), 
                         alpha=0.5, lwd=1) +
-        labs(x='Effciency', y='PDF') +
-  
-        theme_bw()
+        labs(color ='Athlete',  x='Effciency', y='PDF',
+                title='Athletes with related efficiency distributions - Men') +
+                   theme(plot.title = element_text(size=15),
+                         legend.text = element_text(size=10),
+                          legend.title = element_text(size=12),
+                          axis.text.x = element_text(size=10),
+                          axis.text.y = element_text(size=10),
+                          axis.title.x = element_text(size=12),
+                          axis.title.y = element_text(size=12))
+        
 plot
 ```
 In this density estimate plot the each biathlete represented has a meaningful statistics regarding both 
@@ -1676,17 +1755,13 @@ In Vetle's defense in the Beijiing olympics he pulled out a couple of rabbits fr
 
 
 
-```{r}
+```{r fig.align="center", fig.width=5 , fig.height=2.5, warning=FALSE}
+
 names_ordered_w <- names(named_percentages_w[rev(order_perc_w)])
 
 
-plot <- ggplot() +
-        geom_density(aes(efficiency_list_w[[names_ordered_w[1]]], y=..density..,
-                           color=names_ordered_w[1]) 
-                       , alpha=0.5, lwd=1) +
-        geom_density(aes(efficiency_list_w[[names_ordered_w[6]]], y=..density..,
-                          color= names_ordered_w[6]), 
-                        alpha=0.5, lwd=1) +
+plot <- ggplot() + theme_bw() +
+       
         geom_density(aes(efficiency_list_w[[names_ordered_w[33]]], y=..density..,
                            color =  names_ordered_w[33]) 
                        , alpha=0.5, lwd=1) +
@@ -1702,9 +1777,17 @@ plot <- ggplot() +
         geom_density(aes(efficiency_list_w[[names_ordered_w[12]]], y=..density..,
                            color= names_ordered_w[12]), 
                         alpha=0.5, lwd=1) +
-        labs(x='Effciency', y='PDF') +
+        labs(color ='Athlete',  x='Effciency', y='PDF',
+                title='Athletes with related efficiency distributions - Women') +
+                   theme(plot.title = element_text(size=15),
+                         legend.text = element_text(size=10),
+                          legend.title = element_text(size=12),
+                          axis.text.x = element_text(size=10),
+                          axis.text.y = element_text(size=10),
+                          axis.title.x = element_text(size=12),
+                          axis.title.y = element_text(size=12))
   
-        theme_bw()
+      
 plot
 ```
 In this set of highly represented athletes we see how consistent are the 2 italians with Lisa that improves her performance and with Dorothea that slightly makes it worse (in terms of "efficiency").
@@ -1829,16 +1912,20 @@ precision_jags <- c(unname(chain[[1]])[,2],
 
 
 
-```{r}
+```{r fig.align="center", fig.width=2 , fig.height=1.5, warning=FALSE}
 # Plot of the mean parameter
-plot <- ggplot() +
+plot <- ggplot() + theme_bw() +
         geom_histogram(aes(mean_jags, y=..density..), 
-                       fill='firebrick', alpha=0.9, color='black', 
-                       bins = bins_fd(mean_jags)) +
+                       fill='darkorange2', alpha=0.9, color='white', 
+                       bins = bins_fd(mean_jags))+
+           labs(x='Mean', y='PDF', 
+                title='Posterior Distribution for the Mean of the Normal') +
+                   theme(plot.title = element_text(size=10),
+                          axis.text.x = element_text(size=6),
+                          axis.text.y = element_text(size=6),
+                          axis.title.x = element_text(size=8),
+                          axis.title.y = element_text(size=8))
         
-        theme_bw()
-
-
 
 results_plot <- ggplot_build(plot)$data[[1]]
 
@@ -1847,23 +1934,31 @@ y_max_idx <- which.max(ggplot_build(plot)$data[[1]]$y)
 mean_max <- (ggplot_build(plot)$data[[1]]$xmax[y_max_idx] + ggplot_build(plot)$data[[1]]$xmin[y_max_idx])/2
 
 
-plot <- plot + geom_vline(aes(xintercept=mean_max))+
-        theme_bw()
+plot <- plot + geom_vline(aes(xintercept=mean_max),  linetype='dashed')+
+              annotate('text', x= mean_max + 0.035, y=14.7, label=sprintf('Max Mean = %s',round(mean_max,3)), size=2.5)
+
 plot
 ```
 
 That is the posterior distribution of the mean of the gaussian as returned by the chains.
 We can see that it is peaked at a negative value pointing that men are slightly less efficient than women again, efficiency is a negative thing here: higher efficiency means you make more misses when you are in the top 10. Further below we estimate if this fact is due to chance alone or if we can state that there is an actual difference.
 
-```{r}
+```{r fig.align="center", fig.width=2 , fig.height=1.5, warning=FALSE}
 # Plot of the precision paramters
-plot <- ggplot() +
+plot <- ggplot() + theme_bw() +
         geom_histogram(aes(precision_jags, y=..density..), 
-                       fill='firebrick', alpha=0.9, color='black', 
-                       bins = bins_fd(mean_jags)) +
-        theme_bw()
+                       fill='forestgreen', alpha=0.9, color='white', 
+                       bins = bins_fd(mean_jags))+
+           labs(x='Precision', y='PDF', 
+                title='Posterior Distribution for the Precision of the Normal') +
+                   theme(plot.title = element_text(size=10),
+                          axis.text.x = element_text(size=6),
+                          axis.text.y = element_text(size=6),
+                          axis.title.x = element_text(size=8),
+                          axis.title.y = element_text(size=8))
+        
 
-plot
+
 results_plot <- ggplot_build(plot)$data[[1]]
 
 y_max_idx <- which.max(ggplot_build(plot)$data[[1]]$y)
@@ -1871,7 +1966,9 @@ y_max_idx <- which.max(ggplot_build(plot)$data[[1]]$y)
 precision_max <- (ggplot_build(plot)$data[[1]]$xmax[y_max_idx] +
                     ggplot_build(plot)$data[[1]]$xmin[y_max_idx])/2 
 
-
+plot <- plot + geom_vline(aes(xintercept=precision_max), linetype='dashed')+
+         annotate('text', x=precision_max + 0.035, y=18.8, label=sprintf('Max Precision = %s',round(precision_max,3)), size=2.5)
+plot
 ```
 The precision of the gaussian defined as $$\tau = \frac{1}{\sigma ^2}$$
 
@@ -1883,14 +1980,25 @@ std_max
 ```
 
 
-```{r}
-# Normal given our retrieved meanand variance 
+```{r fig.align="center", fig.width=2 , fig.height=1.5}
+# Normal given our retrieved mean and standard deviation 
+
 x_axis <- seq(-5, 5, 0.001)
-plot <- ggplot() +
-        geom_line(aes(x=x_axis, y=dnorm(x = x_axis, mean = mean_max, sd = std_max))) +
-        geom_vline(xintercept = 0) +
-        geom_vline(xintercept = mean_max) +
-        theme_bw()
+
+plot <- ggplot() + theme_bw()+
+        geom_line(aes(x=x_axis, y=dnorm(x = x_axis, mean = mean_max, sd = std_max)), color = 'midnightblue' , lwd=0.8) +
+        geom_vline(xintercept = mean_max, color='chocolate1' ,lwd=0.8, linetype='dashed')+
+  annotate('text', x=mean_max + 2.35, y=0.27, label=sprintf('Max Mean = %s',round(mean_max,3)), size=2.5)+
+           labs(x='Efficiency', y='PDF', 
+                title='Retrieved Normal Distribution for the Efficiency',
+                subtitle = 'Difference between Male and Female athletes') +
+                   theme(plot.title = element_text(size=10),
+                         plot.subtitle = element_text(size=8),
+                          axis.text.x = element_text(size=6),
+                          axis.text.y = element_text(size=6),
+                          axis.title.x = element_text(size=8),
+                          axis.title.y = element_text(size=8))
+        
 plot
 ```
 We can see how the normal distribution of the efficiency difference between male and female athletes, obtained taking the maximum of the posteriors, is centered pretty nicely around 0. We can then state that every hypothesis testing we could do looking for a difference in the efficiencies would reject the latter proposition meaning that the slight advantage that men seemed to have can be attributed to chances.
@@ -1915,9 +2023,8 @@ years_shooting <-years[3:length(years)]
 
 
 ```{r}
-# Importing thr shooting data for women
+# Importing the shooting data for women
 df_shooting_women <- data.frame()
-
 
 
 for (i in seq_along(years_shooting)){
@@ -2276,15 +2383,47 @@ We restate that the Null hypothesis $H_0$ is that in individuals, the very last 
 
 
 
-```{r}
+```{r fig.align="center", fig.width=2 , fig.height=1.5}
+
 # Hypothesis testing for men
 x_axis <- seq(0, 1, 0.001)
-plot <- ggplot() +
+x_zoom_m <- seq(0.79, 0.88, 0.01)
+
+x_rib_m <- seq(threshold_m,1,0.01)
+y_area_m <- dbeta(x=x_rib_m, shape1 = alpha_post_ind_m, shape2 = beta_post_ind_m)
+
+x_rib_m_zoom <- seq(threshold_m,0.85,0.01)
+y_area_m_zoom <- dbeta(x=x_rib_m_zoom, shape1 = alpha_post_ind_m, shape2 = beta_post_ind_m)
+
+plot <- ggplot() + theme_bw() + 
         geom_line(aes(x=x_axis, y=dbeta(x = x_axis, shape1 = alpha_post_ind_m,
-                                        shape2 = beta_post_ind_m))) +
-        geom_vline(aes(xintercept=threshold_m)) +
-        theme_bw()
-plot
+                                        shape2 = beta_post_ind_m)), color='steelblue4', lwd=0.78) +
+        geom_vline(aes(xintercept=threshold_m), color='darkorange2', lwd=0.8)+
+  annotate('text', x=threshold_m + 0.1, y=7, label='  --> Null Hyp H0', size=2.5)+
+           labs(x='Probability of hitting the target', y='Posterior PDF', 
+                title='Posterior Distribution Men',
+                subtitle = 'Bayesian Hypothesis Testing') +
+                     theme(plot.title = element_text(size=10),
+                           plot.subtitle = element_text(size=8),
+                          axis.text.x = element_text(size=6),
+                          axis.text.y = element_text(size=6),
+                          axis.title.x = element_text(size=8),
+                          axis.title.y = element_text(size=8))+
+  geom_ribbon(aes(x=x_rib_m,ymin=0,ymax=y_area_m), alpha=1, fill ='black')
+
+
+pl_m_zoom <- ggplot()+ theme_bw()+
+  geom_line(aes(x_zoom_m, dbeta(x_zoom_m, shape1 = alpha_post_ind_m,                                      shape2 = beta_post_ind_m)), color='steelblue4', size=0.78)+
+  geom_vline(aes(xintercept=threshold_m), color='darkorange2', lwd=0.8)+
+  geom_ribbon(aes(x=x_rib_m_zoom,ymin=0,ymax=y_area_m_zoom), alpha=0.7, fill ='black')+  labs(x='Probability', y='Posterior')+
+  theme(axis.text.x = element_text(size=5),
+        axis.text.y = element_text(size=5),
+        axis.title.x = element_text(size=8),
+        axis.title.y = element_text(size=8))
+  
+
+plot + annotation_custom(ggplotGrob(pl_m_zoom), xmin = 0, xmax = 0.5, ymin = 2.5, ymax = 8)
+        
 ```
 
 
@@ -2297,21 +2436,53 @@ int_func_m <- function(x){
 integrate(f = int_func_m, lower = threshold_m, upper=1)$value
 ```
 
-Using a significance level of $ 1\%$ we can reject the Null hypothesis with a $99\%$ probabilty and state that the last shot in individual races is really more troublesome then in every other race format and that the pressure of loosing a whole minute is the decider in the performance.
+Using a significance level of $ 1\%$ we can reject the Null hypothesis with a $99\%$ probability and state that the last shot in individual races is really more troublesome then in every other race format and that the pressure of loosing a whole minute is the decider in the performance.
 
 
+```{r fig.align="center", fig.width=2 , fig.height=1.5}
 
-```{r}
 # Integrating the null hypothesis for women
-x_axis <- seq(0, 1, 0.001)
-plot <- ggplot() +
-        geom_line(aes(x=x_axis, y=dbeta(x = x_axis, shape1 = alpha_post_ind_w,
-                                        shape2 = beta_post_ind_w))) +
-        geom_vline(aes(xintercept=threshold_w)) +
-        theme_bw()
-plot
-```
 
+x_axis <- seq(0, 1, 0.001)
+x_zoom_w <- seq(0.80, 0.85, 0.01)
+
+x_rib_w <- seq(threshold_w,1,0.01)
+y_area_w <- dbeta(x=x_rib_w, shape1 = alpha_post_ind_w, shape2 = beta_post_ind_w)
+
+x_rib_w_zoom <- seq(threshold_w,0.85,0.01)
+y_area_w_zoom <- dbeta(x=x_rib_w_zoom, shape1 = alpha_post_ind_w, shape2 = beta_post_ind_w)
+
+plot <- ggplot() + theme_bw() +
+        geom_line(aes(x=x_axis, y=dbeta(x = x_axis, shape1 = alpha_post_ind_w,
+                                        shape2 = beta_post_ind_w)), color='deeppink3', lwd=0.78) +
+        geom_vline(aes(xintercept=threshold_w), color='mediumblue', lwd=0.8)+
+  annotate('text', x=threshold_w + 0.1, y=7, label='  --> Null Hyp H0', size=2.5)+
+           labs(x='Probability of hitting the target', y='Posterior PDF', 
+                title='Posterior Distribution - Women',
+                subtitle = 'Bayesian Hypothesis Testing') +
+                     theme(plot.title = element_text(size=10),
+                           plot.subtitle = element_text(size=8),
+                          axis.text.x = element_text(size=6),
+                          axis.text.y = element_text(size=6),
+                          axis.title.x = element_text(size=8),
+                          axis.title.y = element_text(size=8))+
+  geom_ribbon(aes(x=x_rib_w,ymin=0,ymax=y_area_w), alpha=1, fill ='black')
+
+
+pl_w_zoom <- ggplot()+ theme_bw()+
+  geom_line(aes(x_zoom_w, dbeta(x_zoom_w, shape1 = alpha_post_ind_w,                                      shape2 = beta_post_ind_w)), color='deeppink3', size=0.78)+
+  geom_vline(aes(xintercept=threshold_w), color='mediumblue', lwd=0.8)+
+  geom_ribbon(aes(x=x_rib_w_zoom,ymin=0,ymax=y_area_w_zoom), alpha=0.7, fill ='black')+
+  labs(x='Probability', y='Posterior')+
+  theme(axis.text.x = element_text(size=5),
+        axis.text.y = element_text(size=5),
+        axis.title.x = element_text(size=8),
+        axis.title.y = element_text(size=8))
+  
+
+
+plot + annotation_custom(ggplotGrob(pl_w_zoom), xmin = 0, xmax = 0.5, ymin = 2.5, ymax = 8)
+```
 
 
 ```{r}
