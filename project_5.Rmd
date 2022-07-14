@@ -1435,7 +1435,7 @@ plot <- ggplot() +
                         ),color=rep(x_axis, nrow(top_names_hit_miss))), size=0.8) +
         
         labs(color = 'Probability \nColor map', x='P', y='Prior PDF', title=
-               'Priors computed') +
+               'Priors computed - Men') +
         
         theme_bw()
 plot
@@ -1725,27 +1725,14 @@ names_ordered <- names(named_percentages[rev(order_perc)])
 
 
 plot <- ggplot() +   theme_bw() +
-        geom_density(aes(efficiency_list[[names_ordered[1]]], y=..density..,
-                           color=names_ordered[1]) 
+        geom_density(aes(efficiency_list[[names_ordered[10]]], y=..density..,
+                           color=names_ordered[10]) 
                        , alpha=0.5, lwd=1) +
+        g
         geom_density(aes(efficiency_list[[names_ordered[6]]], y=..density..,
-                          color= names_ordered[6]), 
+                           color= names_ordered[6]), 
                         alpha=0.5, lwd=1) +
-        geom_density(aes(efficiency_list[[names_ordered[7]]], y=..density..,
-                           color =  names_ordered[7]) 
-                       , alpha=0.5, lwd=1) +
-        geom_density(aes(efficiency_list[[names_ordered[14]]], y=..density..,
-                           color= names_ordered[14]), 
-                        alpha=0.5, lwd=1) +
-        geom_density(aes(efficiency_list[[names_ordered[9]]], y=..density..,
-                           color= names_ordered[9]), 
-                        alpha=0.5, lwd=1) +
-        geom_density(aes(efficiency_list[[names_ordered[11]]], y=..density..,
-                           color= names_ordered[11]), 
-                        alpha=0.5, lwd=1) +
-        geom_density(aes(efficiency_list[[names_ordered[12]]], y=..density..,
-                           color= names_ordered[12]), 
-                        alpha=0.5, lwd=1) +
+        
         labs(x='Effciency', y='PDF') +
   labs(color ='Athlete',  x='Effciency', y='PDF',
                 title='Athletes with related efficiency distributions - Men') +
@@ -1760,6 +1747,12 @@ plot <- ggplot() +   theme_bw() +
       
 plot
 ```
+
+
+
+
+
+
 In this density estimate plot the each biathlete represented has a meaningful statistics regarding both 
 the presences in the top 10 and the presences outside of it.
 We can see how Emil Svendsen noticeably improves with an efficiency of almost -10%, while Christiansen who is notoriously doesn't posses the heart of a lion ruins his percentages. Simon Eder who is going to become the athlete with the most 0s in history has an almost dramatic drop for his standards in standing shooting when entering the last shooting range in the top 10.
@@ -1772,22 +1765,16 @@ names_ordered_w <- names(named_percentages_w[rev(order_perc_w)])
 
 
 plot <- ggplot() +  theme_bw() +
-        geom_density(aes(efficiency_list_w[[names_ordered_w[1]]], y=..density..,
-                           color=names_ordered_w[1]) 
+        geom_density(aes(efficiency_list_w[[names_ordered_w[21]]], y=..density..,
+                           color=names_ordered_w[21]) 
                        , alpha=0.5, lwd=1) +
-        geom_density(aes(efficiency_list_w[[names_ordered_w[6]]], y=..density..,
-                          color= names_ordered_w[6]), 
+        geom_density(aes(efficiency_list_w[[names_ordered_w[18]]], y=..density..,
+                          color= names_ordered_w[18]), 
                         alpha=0.5, lwd=1) +
 
-        geom_density(aes(efficiency_list_w[[names_ordered_w[4]]], y=..density..,
-                           color= names_ordered_w[4]), 
-                        alpha=0.5, lwd=1) +
-        geom_density(aes(efficiency_list_w[[names_ordered_w[18]]], y=..density..,
-                           color= names_ordered_w[18]), 
-                        alpha=0.5, lwd=1) +
-        geom_density(aes(efficiency_list_w[[names_ordered_w[12]]], y=..density..,
-                           color= names_ordered_w[12]), 
-                        alpha=0.5, lwd=1) +
+        geom_density(aes(efficiency_list_w[[names_ordered_w[7]]], y=..density..,
+                           color= names_ordered_w[7]), 
+                        alpha=0.5, lwd=1) 
            labs(color ='Athlete',  x='Effciency', y='PDF',
                 title='Athletes with related efficiency distributions - Women') +
                    theme(plot.title = element_text(size=15),
@@ -1802,6 +1789,12 @@ plot
 ```
 In this set of highly represented athletes we see how consistent are the 2 italians with Lisa that improves her performance and with Dorothea that slightly makes it worse (in terms of "efficiency").
 We can see how respecting her family traditions Kristina Reztsova has a very high "efficiency" volatility,  she performs good on skis but she isn't quite the cross country skier lend to biathlon like her mother Anfisa was.
+
+```{r}
+named_percentages_w[order_perc_w]
+```
+
+
 
 ## Confronting men and women
 
